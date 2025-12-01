@@ -5,6 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'features/navigation/app_router.dart';
 import 'data/services/database_service.dart';
 import 'data/repositories/category_repository.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,13 @@ void main() async {
   // 3. Initialize default data using the container
   final categoryRepo = container.read(categoryRepositoryProvider);
   await categoryRepo.initDefaultCategories();
+
+  // 4. Set high refresh rate
+  try {
+    await FlutterDisplayMode.setHighRefreshRate();
+  } catch (e) {
+    debugPrint('Error setting high refresh rate: $e');
+  }
 
   runApp(
     UncontrolledProviderScope(

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../data/models/device.dart';
 import '../../data/repositories/device_repository.dart';
+import '../../shared/widgets/app_text_field.dart';
 import '../../shared/widgets/base_card.dart';
 import '../../shared/widgets/status_badge.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../shared/widgets/app_text_field.dart';
 import '../../shared/utils/category_utils.dart';
 import '../../shared/config/category_config.dart';
 import '../../shared/config/cost_config.dart';
@@ -72,7 +70,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final devicesAsync = ref.watch(deviceListProvider);
-    final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
     // Initialize FAB position to bottom right, but higher to avoid bottom nav
