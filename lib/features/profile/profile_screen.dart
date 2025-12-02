@@ -70,7 +70,7 @@ class ProfileScreen extends ConsumerWidget {
                         // iOS or others
                         final uri = Uri.parse('file://$path');
                         try {
-                          // Try open_file first for desktop/iOS
+                          // Try open_file_plus first for desktop/iOS
                           final result = await OpenFile.open(path);
                           if (result.type != ResultType.done) {
                              if (!await launchUrl(uri)) {

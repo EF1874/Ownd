@@ -259,7 +259,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color.withOpacity(0.7))), // Smaller label
+        Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color.withValues(alpha: 0.7))), // Smaller label
         const SizedBox(height: 2),
         Text(
           value,
@@ -501,7 +501,7 @@ class _DeviceGridItem extends ConsumerWidget {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: categoryColor.withOpacity(0.1),
+                color: categoryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               alignment: Alignment.center,

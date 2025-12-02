@@ -31,6 +31,7 @@ gradle.lifecycle.beforeProject {
         pluginManager.withPlugin("com.android.library") {
             extensions.configure<com.android.build.gradle.LibraryExtension> {
                 namespace = "dev.isar.isar_flutter_libs"
+                compileSdk = 36
             }
         }
     }

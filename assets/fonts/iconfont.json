@@ -1,0 +1,170 @@
+{
+  "id": "5078338",
+  "name": "物历",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "5221663",
+      "name": "一体机",
+      "font_class": "yitiji",
+      "unicode": "e627",
+      "unicode_decimal": 58919
+    },
+    {
+      "icon_id": "5221664",
+      "name": "主机",
+      "font_class": "zhuji",
+      "unicode": "e628",
+      "unicode_decimal": 58920
+    },
+    {
+      "icon_id": "5221665",
+      "name": "笔记本",
+      "font_class": "bijiben",
+      "unicode": "e629",
+      "unicode_decimal": 58921
+    },
+    {
+      "icon_id": "5221666",
+      "name": "鼠标",
+      "font_class": "shubiao",
+      "unicode": "e62a",
+      "unicode_decimal": 58922
+    },
+    {
+      "icon_id": "5221667",
+      "name": "键盘",
+      "font_class": "jianpan",
+      "unicode": "e62b",
+      "unicode_decimal": 58923
+    },
+    {
+      "icon_id": "5221697",
+      "name": "显卡",
+      "font_class": "xianqia",
+      "unicode": "e62c",
+      "unicode_decimal": 58924
+    },
+    {
+      "icon_id": "5221721",
+      "name": "CPU",
+      "font_class": "CPU",
+      "unicode": "e62d",
+      "unicode_decimal": 58925
+    },
+    {
+      "icon_id": "5221805",
+      "name": "手机iPhone",
+      "font_class": "shoujiiPhone",
+      "unicode": "e62e",
+      "unicode_decimal": 58926
+    },
+    {
+      "icon_id": "5221846",
+      "name": "充电器",
+      "font_class": "chongdianqi",
+      "unicode": "e62f",
+      "unicode_decimal": 58927
+    },
+    {
+      "icon_id": "5221848",
+      "name": "usb数据线",
+      "font_class": "usbshujuxian",
+      "unicode": "e630",
+      "unicode_decimal": 58928
+    },
+    {
+      "icon_id": "5221851",
+      "name": "路由器",
+      "font_class": "luyouqi",
+      "unicode": "e631",
+      "unicode_decimal": 58929
+    },
+    {
+      "icon_id": "5221896",
+      "name": "平板",
+      "font_class": "pingban",
+      "unicode": "e632",
+      "unicode_decimal": 58930
+    },
+    {
+      "icon_id": "5222012",
+      "name": "sd卡",
+      "font_class": "sdqia",
+      "unicode": "e633",
+      "unicode_decimal": 58931
+    },
+    {
+      "icon_id": "5222014",
+      "name": "无人机",
+      "font_class": "wurenji",
+      "unicode": "e634",
+      "unicode_decimal": 58932
+    },
+    {
+      "icon_id": "5222015",
+      "name": "耳机",
+      "font_class": "erji",
+      "unicode": "e635",
+      "unicode_decimal": 58933
+    },
+    {
+      "icon_id": "5222036",
+      "name": "音响",
+      "font_class": "yinxiang",
+      "unicode": "e636",
+      "unicode_decimal": 58934
+    },
+    {
+      "icon_id": "5222097",
+      "name": "智能设备",
+      "font_class": "zhinengshebei",
+      "unicode": "e637",
+      "unicode_decimal": 58935
+    },
+    {
+      "icon_id": "5222142",
+      "name": "三脚架",
+      "font_class": "sanjiaojia",
+      "unicode": "e638",
+      "unicode_decimal": 58936
+    },
+    {
+      "icon_id": "5222210",
+      "name": "相机",
+      "font_class": "xiangji",
+      "unicode": "e639",
+      "unicode_decimal": 58937
+    },
+    {
+      "icon_id": "5222211",
+      "name": "运动相机",
+      "font_class": "yundongxiangji",
+      "unicode": "e63a",
+      "unicode_decimal": 58938
+    },
+    {
+      "icon_id": "5222252",
+      "name": "充电宝",
+      "font_class": "chongdianbao",
+      "unicode": "e63b",
+      "unicode_decimal": 58939
+    },
+    {
+      "icon_id": "5222333",
+      "name": "游戏",
+      "font_class": "youxi",
+      "unicode": "e63c",
+      "unicode_decimal": 58940
+    },
+    {
+      "icon_id": "8289014",
+      "name": "手机",
+      "font_class": "shouji",
+      "unicode": "e86e",
+      "unicode_decimal": 59502
+    }
+  ]
+}
