@@ -41,6 +41,9 @@ static IconData getIconData(String iconName) {
     case 'cloud': return Icons.cloud;
     case 'memory': return Icons.memory;
     case 'desktop_windows': return Icons.desktop_windows;
+    case 'monitor': return Icons.monitor;
+    case 'mouse': return Icons.mouse;
+    case 'house': return Icons.house;
     default: return Icons.category;
   }
 }

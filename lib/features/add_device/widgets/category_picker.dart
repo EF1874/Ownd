@@ -62,11 +62,13 @@ class CategoryPicker extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (ctx) => Consumer(
         builder: (context, ref, child) {
           final categoriesAsync = ref.watch(categoriesProvider);
           
           return Container(
+            height: 400,
             padding: const EdgeInsets.all(16),
             width: double.infinity,
             child: Column(
@@ -78,35 +80,44 @@ class CategoryPicker extends ConsumerWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 16),
-                categoriesAsync.when(
-                  data: (categories) => Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: categories.map((category) {
-                      final isSelected = selectedCategory?.id == category.id;
-                      final itemConfig = CategoryConfig.getItem(category.name);
-                      
-                      return ChoiceChip(
-                        label: Text(category.name),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            onCategorySelected(category);
-                            Navigator.pop(ctx);
-                          }
-                        },
-                        avatar: Icon(
-                          IconUtils.getIconData(category.iconPath),
-                          size: 18,
-                          color: itemConfig.color,
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        categoriesAsync.when(
+                          data: (categories) => Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: categories.map((category) {
+                              final isSelected = selectedCategory?.id == category.id;
+                              final itemConfig = CategoryConfig.getItem(category.name);
+                              
+                              return ChoiceChip(
+                                label: Text(category.name),
+                                selected: isSelected,
+                                onSelected: (selected) {
+                                  if (selected) {
+                                    onCategorySelected(category);
+                                    Navigator.pop(ctx);
+                                  }
+                                },
+                                avatar: Icon(
+                                  IconUtils.getIconData(category.iconPath),
+                                  size: 18,
+                                  color: itemConfig.color,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          loading: () => const Center(child: CircularProgressIndicator()),
+                          error: (err, stack) => Text('Error: $err'),
                         ),
-                      );
-                    }).toList(),
+                        SizedBox(height: 32 + MediaQuery.of(context).padding.bottom),
+                      ],
+                    ),
                   ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Text('Error: $err'),
                 ),
-                const SizedBox(height: 32),
               ],
             ),
           );

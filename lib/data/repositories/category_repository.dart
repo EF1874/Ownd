@@ -46,21 +46,38 @@ class CategoryRepository {
   }
   
   Future<void> initDefaultCategories() async {
-    // Iterate through all default categories and add them if they don't exist
-    for (final item in CategoryConfig.defaultCategories) {
-      final exists = await _isar.categorys.filter().nameEqualTo(item.name).findFirst();
-      
-      if (exists == null) {
-        final category = Category()
-          ..uuid = const Uuid().v4()
-          ..name = item.name
-          ..iconPath = item.iconPath
-          ..isDefault = true;
-          
-        await _isar.writeTxn(() async {
-          await _isar.categorys.put(category);
-        });
+    // 1. Get all defined category names from config
+    final configNames = CategoryConfig.defaultCategories.map((e) => e.name).toSet();
+    
+    // 2. Get all existing categories from DB
+    final existingCategories = await _isar.categorys.where().findAll();
+    
+    await _isar.writeTxn(() async {
+      // 3. Delete categories that are not in config
+      for (final category in existingCategories) {
+        if (!configNames.contains(category.name)) {
+          await _isar.categorys.delete(category.id);
+        }
       }
-    }
+
+      // 4. Add or update categories from config
+      for (final item in CategoryConfig.defaultCategories) {
+        final existing = await _isar.categorys.filter().nameEqualTo(item.name).findFirst();
+        
+        if (existing == null) {
+          // Add new
+          final category = Category()
+            ..uuid = const Uuid().v4()
+            ..name = item.name
+            ..iconPath = item.iconPath
+            ..isDefault = true;
+          await _isar.categorys.put(category);
+        } else {
+          // Update existing (ensure icon is up to date)
+          existing.iconPath = item.iconPath;
+          await _isar.categorys.put(existing);
+        }
+      }
+    });
   }
 }

@@ -19,6 +19,7 @@ class CategoryConfig {
     CategoryItem(name: '主机', iconPath: 'desktop_windows', color: Colors.indigoAccent),
     CategoryItem(name: '显示器', iconPath: 'monitor', color: Colors.blueAccent),
     CategoryItem(name: '显卡', iconPath: 'memory', color: Colors.blueGrey),
+    CategoryItem(name: '电脑配件', iconPath: 'mouse', color: Colors.indigoAccent),
     CategoryItem(name: '平板', iconPath: 'tablet_mac', color: Colors.deepPurple),
     CategoryItem(name: '耳机', iconPath: 'headphones', color: Colors.teal),
     CategoryItem(name: '相机', iconPath: 'camera_alt', color: Colors.brown),
@@ -38,6 +39,8 @@ class CategoryConfig {
     CategoryItem(name: '家具家装', iconPath: 'chair', color: Colors.brown),
     CategoryItem(name: '汽车用品', iconPath: 'directions_car', color: Colors.grey),
     CategoryItem(name: '虚拟商品', iconPath: 'cloud', color: Colors.lightBlue),
+    CategoryItem(name: '汽车', iconPath: 'directions_car', color: Colors.blueGrey),
+    CategoryItem(name: '房子', iconPath: 'house', color: Colors.brown),
     CategoryItem(name: '其它', iconPath: 'devices_other', color: Colors.blueGrey),
   ];
 
