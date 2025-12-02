@@ -12,6 +12,7 @@ import '../../shared/widgets/status_badge.dart';
 import '../../shared/utils/category_utils.dart';
 import '../../shared/config/category_config.dart';
 import '../../shared/config/cost_config.dart';
+import '../../data/services/preferences_service.dart';
 import '../add_device/add_device_screen.dart';
 import '../navigation/navigation_provider.dart';
 
@@ -33,6 +34,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _sortBy = 'date_desc'; // date_desc, date_asc, price_desc, price_asc
   Offset _fabPosition = const Offset(0, 0); // Will be initialized in build
   bool _isFabInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize state from preferences
+    final prefs = ref.read(preferencesServiceProvider);
+    _isGridView = prefs.isGridView;
+    _sortBy = prefs.sortBy;
+  }
 
   @override
   void dispose() {
@@ -105,11 +115,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const Spacer(),
                       IconButton(
                         icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
-                        onPressed: () => setState(() => _isGridView = !_isGridView),
+                        onPressed: () {
+                          setState(() => _isGridView = !_isGridView);
+                          ref.read(preferencesServiceProvider).setGridView(_isGridView);
+                        },
                       ),
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.sort),
-                        onSelected: (v) => setState(() => _sortBy = v),
+                        onSelected: (v) {
+                          setState(() => _sortBy = v);
+                          ref.read(preferencesServiceProvider).setSortBy(v);
+                        },
                         itemBuilder: (context) => [
                           const PopupMenuItem(value: 'date_desc', child: Text('购买日期 (新→旧)')),
                           const PopupMenuItem(value: 'date_asc', child: Text('购买日期 (旧→新)')),
@@ -350,6 +366,8 @@ class _DeviceListItem extends ConsumerWidget {
                   children: [
                     Text(
                       device.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
@@ -359,23 +377,22 @@ class _DeviceListItem extends ConsumerWidget {
                           TextSpan(
                             text: '¥${device.price.toStringAsFixed(0)}',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.secondary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                              color: const Color(0xFF1581BF), // Changed to Deep Orange
+                              // fontWeight: FontWeight.bold, // Removed bold
+                              fontSize: 20,
                             ),
                           ),
                           const WidgetSpan(child: SizedBox(width: 8)),
                           TextSpan(
                             text: '¥${dailyCost.toStringAsFixed(2)}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: costColor ?? theme.colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.bold,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: (costColor ?? theme.colorScheme.onSurfaceVariant).withValues(alpha: 0.7),
                             ),
                           ),
                           TextSpan(
                             text: '/天',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                               fontSize: 10,
                             ),
                           ),
@@ -388,12 +405,25 @@ class _DeviceListItem extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    '${device.daysUsed}天',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.secondary,
-                      fontSize: 20,
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${device.daysUsed}',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.secondary, // Reverted to secondary
+                            fontSize: 20,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '天',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: Colors.grey, // Changed to Grey
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -436,11 +466,9 @@ class _DeviceListItem extends ConsumerWidget {
       if (device.status == 'backup') {
         badges.add(const StatusBadge(text: '备用', color: Colors.blue));
       }
-      if (device.warrantyEndDate != null && device.warrantyEndDate!.isBefore(DateTime.now())) {
-        badges.add(const StatusBadge(text: '过保', color: Colors.red));
+      if (device.warrantyEndDate != null && device.warrantyEndDate!.isAfter(DateTime.now())) {
+        badges.add(const StatusBadge(text: '在保', color: Colors.green));
       }
-      // Always show "In Use" if not scrapped, even if over warranty or backup
-      badges.add(const StatusBadge(text: '在用', color: Colors.green));
     }
 
     return Wrap(
@@ -496,65 +524,94 @@ class _DeviceGridItem extends ConsumerWidget {
         );
       },
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.start, // Align to start
         children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: categoryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Icon(categoryIcon, size: 48, color: categoryColor),
+          // Icon Container - Fixed height instead of Expanded
+          Container(
+            height: 80, // Fixed height
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: categoryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
+            alignment: Alignment.center,
+            child: Icon(categoryIcon, size: 28, color: categoryColor),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             device.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: '¥${device.price.toStringAsFixed(0)}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.secondary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const WidgetSpan(child: SizedBox(width: 4)),
-                    TextSpan(
-                      text: '¥${dailyCost.toStringAsFixed(2)}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: costColor ?? theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextSpan(
-                      text: '/天',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.tertiary,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
+          // Days Used
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '${device.daysUsed}',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.secondary,
+                    fontSize: 20,
+                  ),
                 ),
-              ),
-              Text(
-                '${device.daysUsed}天',
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.secondary),
-              ),
-            ],
+                TextSpan(
+                  text: '天',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.grey,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          _DeviceListItem(device: device)._buildStatusBadges(device),
+          const SizedBox(height: 2),
+          // Price
+          RichText(
+            textAlign: TextAlign.center,
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '¥${device.price.toStringAsFixed(0)}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF1581BF), // Changed to Deep Orange
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const WidgetSpan(child: SizedBox(width: 4)),
+                TextSpan(
+                  text: '¥${dailyCost.toStringAsFixed(2)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: (costColor ?? theme.colorScheme.onSurfaceVariant).withValues(alpha: 0.7),
+                  ),
+                ),
+                TextSpan(
+                  text: '/天',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(), // Push badges to bottom
+          // Badges - Fixed height container to reserve space
+          SizedBox(
+            height: 24, // Reserve space for badges
+            child: Center(
+              child: Transform.scale(
+                scale: 0.8,
+                child: _DeviceListItem(device: device)._buildStatusBadges(device),
+              ),
+            ),
+          ),
         ],
       ),
     ).animate().fadeIn().scale();

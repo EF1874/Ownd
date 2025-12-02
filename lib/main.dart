@@ -5,8 +5,10 @@ import 'core/theme/app_theme.dart';
 import 'features/navigation/app_router.dart';
 import 'data/services/database_service.dart';
 import 'data/services/backup_service.dart';
+import 'data/services/preferences_service.dart';
 import 'data/repositories/category_repository.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,19 +25,24 @@ void main() async {
   await backupService.createBackup();
   await backupService.cleanupOldBackups();
 
-  // 2. Create ProviderContainer with the initialized service
+  // 2. Initialize PreferencesService
+  final prefs = await SharedPreferences.getInstance();
+  final preferencesService = PreferencesService(prefs);
+
+  // 3. Create ProviderContainer with the initialized services
   final container = ProviderContainer(
     overrides: [
       databaseServiceProvider.overrideWithValue(dbService),
       backupServiceProvider.overrideWithValue(backupService),
+      preferencesServiceProvider.overrideWithValue(preferencesService),
     ],
   );
   
-  // 3. Initialize default data using the container
+  // 4. Initialize default data using the container
   final categoryRepo = container.read(categoryRepositoryProvider);
   await categoryRepo.initDefaultCategories();
 
-  // 4. Set high refresh rate
+  // 5. Set high refresh rate
   try {
     await FlutterDisplayMode.setHighRefreshRate();
   } catch (e) {

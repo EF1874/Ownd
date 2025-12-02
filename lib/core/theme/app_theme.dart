@@ -7,7 +7,7 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF6C63FF), // Soft Purple
         primary: const Color(0xFF6C63FF),
-        secondary: const Color(0xFF00BFA5), // Mint Teal
+        secondary: const Color(0xFF3DB6B1), // Mint Teal
         tertiary: const Color(0xFFFF6584), // Soft Red/Pink
         surface: const Color(0xFFF8F9FC),
         surfaceContainerHighest: const Color(0xFFE1E4F3),
@@ -63,7 +63,7 @@ class AppTheme {
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF6C63FF),
         primary: const Color(0xFF8F89FF),
-        secondary: const Color(0xFF64FFDA),
+        secondary: const Color(0xFF3DB6B1),
         tertiary: const Color(0xFFFF8FA3),
         surface: const Color(0xFF1A1B1E),
         surfaceContainerHighest: const Color(0xFF2C2E33),

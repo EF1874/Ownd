@@ -77,7 +77,7 @@ class BackupService {
       final now = DateTime.now();
       final formatter = DateFormat('yyyy-MM-dd');
       final dateStr = formatter.format(now);
-      final backupFileName = 'backup_$dateStr.json';
+      final backupFileName = 'auto_backup_$dateStr.json';
       final backupFile = File(p.join(_backupDirectory, backupFileName));
 
       await backupFile.writeAsString(jsonString);

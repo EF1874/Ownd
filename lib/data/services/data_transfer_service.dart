@@ -89,7 +89,7 @@ class DataTransferService {
       directory.createSync(recursive: true);
     }
 
-    final file = File('${directory.path}/device_manager_backup_${DateTime.now().millisecondsSinceEpoch}.json');
+    final file = File('${directory.path}/user_backup_${DateTime.now().millisecondsSinceEpoch}.json');
     await file.writeAsString(jsonString);
   }
 
