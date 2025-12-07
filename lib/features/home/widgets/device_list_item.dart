@@ -1,0 +1,210 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../data/models/device.dart';
+import '../../../data/repositories/device_repository.dart';
+import '../../../shared/utils/icon_utils.dart';
+import '../../../shared/utils/category_utils.dart';
+import '../../../shared/config/category_config.dart';
+import '../../../shared/widgets/base_card.dart';
+import '../../../shared/widgets/status_badge.dart';
+import '../../add_device/add_device_screen.dart';
+
+class DeviceListItem extends ConsumerWidget {
+  final Device device;
+
+  const DeviceListItem({super.key, required this.device});
+
+  IconData _getCategoryIcon(String? categoryName) {
+    final item = CategoryConfig.getItem(categoryName);
+    return IconUtils.getIconData(item.iconPath);
+  }
+
+  void navigateToEdit(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => AddDeviceScreen(device: device)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final categoryColor = CategoryUtils.getCategoryColor(
+      device.category.value?.name,
+    );
+    final categoryIcon = _getCategoryIcon(device.category.value?.name);
+    // dailyCost is not used in UI but kept for reference if needed
+    // final dailyCost = device.dailyCost;
+    // costColor is not used in UI but kept for reference
+    // final costColor = CostConfig.getCostColor(dailyCost);
+
+    // Handle adaptive color for null categoryColor
+    final effectiveCategoryColor = categoryColor ?? theme.colorScheme.onSurface;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Slidable(
+        key: ValueKey(device.id),
+        endActionPane: ActionPane(
+          motion: const ScrollMotion(),
+          children: [
+            SlidableAction(
+              onPressed: (context) => navigateToEdit(context),
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              icon: Icons.edit,
+              label: '编辑',
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(12),
+              ),
+            ),
+            SlidableAction(
+              onPressed: (context) {
+                _showDeleteDialog(context, ref);
+              },
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              icon: Icons.delete,
+              label: '删除',
+              borderRadius: const BorderRadius.horizontal(
+                right: Radius.circular(12),
+              ),
+            ),
+          ],
+        ),
+        child: BaseCard(
+          color: theme.colorScheme.surfaceContainerHighest.withAlpha(
+            102,
+          ), // 0.4 * 255
+          onTap: () => navigateToEdit(context),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: effectiveCategoryColor.withAlpha(25), // 0.1 * 255
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(categoryIcon, color: effectiveCategoryColor),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      device.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '¥${device.price.toStringAsFixed(0)}',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: theme.textTheme.bodyMedium?.color,
+                            ),
+                          ),
+                          const WidgetSpan(child: SizedBox(width: 8)),
+                          TextSpan(
+                            text: '• ${device.category.value?.name ?? '未分类'}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '已用 ${device.daysUsed}',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' 天',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  buildStatusBadges(device),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().fadeIn().slideX();
+  }
+
+  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('确认删除?'),
+        content: Text('确定要删除 ${device.name} 吗?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              ref.read(deviceRepositoryProvider).deleteDevice(device.id);
+              Navigator.pop(ctx);
+            },
+            child: const Text('删除', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildStatusBadges(Device device) {
+    List<Widget> badges = [];
+
+    if (device.status == 'scrap') {
+      badges.add(const StatusBadge(text: '报废', color: Colors.grey));
+    } else {
+      if (device.backupDate != null) {
+        badges.add(const StatusBadge(text: '备用', color: Colors.blue));
+      } else if (device.warrantyEndDate != null &&
+          device.warrantyEndDate!.isBefore(DateTime.now())) {
+        badges.add(const StatusBadge(text: '过期', color: Colors.orange));
+      } else {
+        badges.add(const StatusBadge(text: '在用', color: Color(0xFF5D3FD3)));
+      }
+    }
+
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      alignment: WrapAlignment.end,
+      children: badges,
+    );
+  }
+}

@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../data/models/device.dart';
 import '../../data/repositories/device_repository.dart';
 import '../../shared/widgets/app_text_field.dart';
-import '../../shared/utils/icon_utils.dart';
-import '../../shared/widgets/base_card.dart';
-import '../../shared/widgets/status_badge.dart';
-import '../../shared/utils/category_utils.dart';
 import '../../shared/config/category_config.dart';
-import '../../shared/config/cost_config.dart';
 import '../../data/services/preferences_service.dart';
 import '../add_device/add_device_screen.dart';
 import '../navigation/navigation_provider.dart';
+import 'widgets/summary_card.dart';
+import 'widgets/device_list_item.dart';
+import 'widgets/device_grid_item.dart';
+import 'widgets/sticky_filter_delegate.dart';
 
 final deviceListProvider = StreamProvider((ref) {
   final repository = ref.watch(deviceRepositoryProvider);
@@ -34,6 +31,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _sortBy = 'date_desc'; // date_desc, date_asc, price_desc, price_asc
   Offset _fabPosition = const Offset(0, 0); // Will be initialized in build
   bool _isFabInitialized = false;
+
+  String? _selectedFilterCategory;
 
   @override
   void initState() {
@@ -56,7 +55,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Filter
     if (_searchController.text.isNotEmpty) {
       final query = _searchController.text.toLowerCase();
-      result = result.where((d) => d.name.toLowerCase().contains(query)).toList();
+      result = result
+          .where((d) => d.name.toLowerCase().contains(query))
+          .toList();
+    }
+
+    // Category Filter
+    if (_selectedFilterCategory != null) {
+      result = result.where((d) {
+        final major = CategoryConfig.getMajorCategory(d.category.value?.name);
+        return major == _selectedFilterCategory;
+      }).toList();
     }
 
     // Sort
@@ -111,34 +120,80 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   expandedHeight: 130, // Increased height to prevent overflow
                   title: Row(
                     children: [
-                      const Text('物品列表'),
+                      const Text('Canghe 物历'),
                       const Spacer(),
-                      IconButton(
-                        icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view),
-                        onPressed: () {
-                          setState(() => _isGridView = !_isGridView);
-                          ref.read(preferencesServiceProvider).setGridView(_isGridView);
-                        },
-                      ),
                       PopupMenuButton<String>(
-                        icon: const Icon(Icons.sort),
+                        icon: const Icon(Icons.menu),
                         onSelected: (v) {
-                          setState(() => _sortBy = v);
-                          ref.read(preferencesServiceProvider).setSortBy(v);
+                          if (v == 'theme') {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('主题切换暂未实现')),
+                            );
+                          } else if (v.startsWith('sort_')) {
+                            // Sort logic
+                            final sortKey = v.substring(5);
+                            setState(() => _sortBy = sortKey);
+                            ref
+                                .read(preferencesServiceProvider)
+                                .setSortBy(sortKey);
+                          } else if (v == 'view_toggle') {
+                            setState(() => _isGridView = !_isGridView);
+                            ref
+                                .read(preferencesServiceProvider)
+                                .setGridView(_isGridView);
+                          }
                         },
                         itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'date_desc', child: Text('购买日期 (新→旧)')),
-                          const PopupMenuItem(value: 'date_asc', child: Text('购买日期 (旧→新)')),
-                          const PopupMenuItem(value: 'price_desc', child: Text('价格 (高→低)')),
-                          const PopupMenuItem(value: 'price_asc', child: Text('价格 (低→高)')),
+                          PopupMenuItem(
+                            value: 'view_toggle',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _isGridView
+                                      ? Icons.view_list
+                                      : Icons.grid_view,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(_isGridView ? '列表视图' : '网格视图'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'theme',
+                            child: Row(
+                              children: [
+                                Icon(Icons.brightness_6, size: 20),
+                                const SizedBox(width: 8),
+                                Text('切换主题'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          const PopupMenuItem(
+                            value: 'sort_date_desc',
+                            child: Text('购买日期 (新→旧)'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'sort_date_asc',
+                            child: Text('购买日期 (旧→新)'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'sort_price_desc',
+                            child: Text('价格 (高→低)'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'sort_price_asc',
+                            child: Text('价格 (低→高)'),
+                          ),
                         ],
                       ),
                     ],
                   ),
                   bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(70), // Increased height
+                    preferredSize: const Size.fromHeight(60),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), // Adjusted padding
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       child: AppTextField(
                         controller: _searchController,
                         label: '搜索设备...',
@@ -149,12 +204,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(
-                  child: _buildSummaryCard(context, devicesAsync),
+                  child: SummaryCard(devicesAsync: devicesAsync),
+                ),
+                // Sticky Header
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: StickyFilterDelegate(
+                    selectedCategory: _selectedFilterCategory,
+                    onCategorySelected: (category) {
+                      setState(() => _selectedFilterCategory = category);
+                    },
+                  ),
                 ),
                 devicesAsync.when(
                   data: (devices) {
                     final processed = _processDevices(devices);
-                    
+
                     if (processed.isEmpty) {
                       return const SliverFillRemaining(
                         child: Center(child: Text('暂无设备')),
@@ -166,19 +231,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       sliver: _isGridView
                           ? SliverGrid(
                               delegate: SliverChildBuilderDelegate(
-                                (context, index) => _DeviceGridItem(device: processed[index]),
+                                (context, index) =>
+                                    DeviceGridItem(device: processed[index]),
                                 childCount: processed.length,
                               ),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 0.75,
-                              ),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 12,
+                                    crossAxisSpacing: 12,
+                                    childAspectRatio: 0.75,
+                                  ),
                             )
                           : SliverList(
                               delegate: SliverChildBuilderDelegate(
-                                (context, index) => _DeviceListItem(device: processed[index]),
+                                (context, index) =>
+                                    DeviceListItem(device: processed[index]),
                                 childCount: processed.length,
                               ),
                             ),
@@ -210,7 +278,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: FloatingActionButton(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const AddDeviceScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const AddDeviceScreen(),
+                    ),
                   );
                 },
                 child: const Icon(Icons.add),
@@ -220,400 +290,5 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildSummaryCard(BuildContext context, AsyncValue<List<Device>> devicesAsync) {
-    return devicesAsync.maybeWhen(
-      data: (devices) {
-        double totalValue = 0;
-        double dailyCost = 0;
-        int scrapCount = 0;
-        
-        for (var d in devices) {
-          totalValue += d.price;
-          dailyCost += d.dailyCost;
-          if (d.status == 'scrap') scrapCount++;
-        }
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Reduced vertical margin
-          child: BaseCard(
-            color: Theme.of(context).colorScheme.primary,
-            child: Padding(
-              padding: const EdgeInsets.all(12), // Reduced internal padding
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildStatItem(context, '总资产', '¥${totalValue.toStringAsFixed(0)}', isLight: true),
-                      _buildStatItem(context, '日均消耗', '¥${dailyCost.toStringAsFixed(2)}', isLight: true),
-                    ],
-                  ),
-                  const SizedBox(height: 12), // Reduced spacing
-                  const Divider(color: Colors.white24, height: 1), // Reduced divider height
-                  const SizedBox(height: 12), // Reduced spacing
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('设备总数: ${devices.length}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                      Text('已报废: $scrapCount', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ).animate().fadeIn().slideY();
-      },
-      orElse: () => const SizedBox.shrink(),
-    );
-  }
-
-  Widget _buildStatItem(BuildContext context, String label, String value, {bool isLight = false}) {
-    final color = isLight ? Colors.white : Theme.of(context).colorScheme.onSurface;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color.withValues(alpha: 0.7))), // Smaller label
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith( // Smaller value (headlineMedium -> titleLarge)
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-        ),
-      ],
-    );
-  }
-}
-
-class _DeviceListItem extends ConsumerWidget {
-  final Device device;
-
-  const _DeviceListItem({required this.device});
-
-  IconData _getCategoryIcon(String? categoryName) {
-    final item = CategoryConfig.getItem(categoryName);
-    return IconUtils.getIconData(item.iconPath);
-  }
-
-  // _getIconData removed, using IconUtils.getIconData instead
-
-  void _navigateToEdit(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => AddDeviceScreen(device: device)),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final categoryColor = CategoryUtils.getCategoryColor(device.category.value?.name);
-    final categoryIcon = _getCategoryIcon(device.category.value?.name);
-    final dailyCost = device.dailyCost;
-    final costColor = CostConfig.getCostColor(dailyCost);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Slidable(
-        key: ValueKey(device.id),
-        endActionPane: ActionPane(
-          motion: const ScrollMotion(),
-          children: [
-            SlidableAction(
-              onPressed: (context) => _navigateToEdit(context),
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-              icon: Icons.edit,
-              label: '编辑',
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-            ),
-            SlidableAction(
-              onPressed: (context) {
-                _showDeleteDialog(context, ref);
-              },
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              icon: Icons.delete,
-              label: '删除',
-              borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
-            ),
-          ],
-        ),
-        child: BaseCard(
-          color: theme.colorScheme.surfaceContainerHighest.withAlpha(102), // 0.4 * 255
-          onTap: () => _navigateToEdit(context),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: categoryColor.withAlpha(25), // 0.1 * 255
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  categoryIcon,
-                  color: categoryColor,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      device.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '¥${device.price.toStringAsFixed(0)}',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: const Color(0xFF1581BF), // Changed to Deep Orange
-                              // fontWeight: FontWeight.bold, // Removed bold
-                              fontSize: 20,
-                            ),
-                          ),
-                          const WidgetSpan(child: SizedBox(width: 8)),
-                          TextSpan(
-                            text: '¥${dailyCost.toStringAsFixed(2)}',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: (costColor ?? theme.colorScheme.onSurfaceVariant).withValues(alpha: 0.7),
-                            ),
-                          ),
-                          TextSpan(
-                            text: '/天',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '${device.daysUsed}',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.secondary, // Reverted to secondary
-                            fontSize: 20,
-                          ),
-                        ),
-                        TextSpan(
-                          text: '天',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey, // Changed to Grey
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  _buildStatusBadges(device),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    ).animate().fadeIn().slideX();
-  }
-
-  void _showDeleteDialog(BuildContext context, WidgetRef ref) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('确认删除?'),
-        content: Text('确定要删除 ${device.name} 吗?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-          TextButton(
-            onPressed: () {
-              ref.read(deviceRepositoryProvider).deleteDevice(device.id);
-              Navigator.pop(ctx);
-            },
-            child: const Text('删除', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBadges(Device device) {
-    List<Widget> badges = [];
-
-    if (device.status == 'scrap') {
-      badges.add(const StatusBadge(text: '报废', color: Colors.grey));
-    } else {
-      if (device.status == 'backup') {
-        badges.add(const StatusBadge(text: '备用', color: Colors.blue));
-      }
-      if (device.warrantyEndDate != null && device.warrantyEndDate!.isAfter(DateTime.now())) {
-        badges.add(const StatusBadge(text: '在保', color: Colors.green));
-      }
-    }
-
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      alignment: WrapAlignment.end,
-      children: badges,
-    );
-  }
-}
-
-class _DeviceGridItem extends ConsumerWidget {
-  final Device device;
-
-  const _DeviceGridItem({required this.device});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final listItem = _DeviceListItem(device: device);
-    final categoryColor = CategoryUtils.getCategoryColor(device.category.value?.name);
-    final categoryIcon = listItem._getCategoryIcon(device.category.value?.name);
-    final dailyCost = device.dailyCost;
-    final costColor = CostConfig.getCostColor(dailyCost);
-    
-    return BaseCard(
-      color: theme.colorScheme.surfaceContainerHighest.withAlpha(102), // 0.4 * 255
-      onTap: () => listItem._navigateToEdit(context),
-      onLongPress: () {
-        showModalBottomSheet(
-          context: context,
-          builder: (ctx) => Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit),
-                title: const Text('编辑'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  listItem._navigateToEdit(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete, color: Colors.red),
-                title: const Text('删除', style: TextStyle(color: Colors.red)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  ref.read(deviceRepositoryProvider).deleteDevice(device.id);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.start, // Align to start
-        children: [
-          // Icon Container - Fixed height instead of Expanded
-          Container(
-            height: 80, // Fixed height
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: categoryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.center,
-            child: Icon(categoryIcon, size: 28, color: categoryColor),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            device.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          // Days Used
-          RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '${device.daysUsed}',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.secondary,
-                    fontSize: 20,
-                  ),
-                ),
-                TextSpan(
-                  text: '天',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 2),
-          // Price
-          RichText(
-            textAlign: TextAlign.center,
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '¥${device.price.toStringAsFixed(0)}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF1581BF), // Changed to Deep Orange
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const WidgetSpan(child: SizedBox(width: 4)),
-                TextSpan(
-                  text: '¥${dailyCost.toStringAsFixed(2)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: (costColor ?? theme.colorScheme.onSurfaceVariant).withValues(alpha: 0.7),
-                  ),
-                ),
-                TextSpan(
-                  text: '/天',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    fontSize: 10,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(), // Push badges to bottom
-          // Badges - Fixed height container to reserve space
-          SizedBox(
-            height: 24, // Reserve space for badges
-            child: Center(
-              child: Transform.scale(
-                scale: 0.8,
-                child: _DeviceListItem(device: device)._buildStatusBadges(device),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn().scale();
   }
 }

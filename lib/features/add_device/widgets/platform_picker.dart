@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../shared/config/platform_config.dart';
 
 class PlatformPicker extends StatelessWidget {
   final String? selectedPlatform;
@@ -10,25 +11,16 @@ class PlatformPicker extends StatelessWidget {
     required this.onPlatformSelected,
   });
 
-  static const List<Map<String, dynamic>> platforms = [
-    {'name': '京东', 'icon': Icons.shopping_bag, 'color': Colors.red},
-    {'name': '淘宝', 'icon': Icons.shopping_cart, 'color': Colors.orange},
-    {'name': '天猫', 'icon': Icons.store, 'color': Colors.redAccent},
-    {'name': '拼多多', 'icon': Icons.group_work, 'color': Colors.red},
-    {'name': '抖音', 'icon': Icons.music_note, 'color': Colors.black},
-    {'name': '苏宁易购', 'icon': Icons.electrical_services, 'color': Colors.amber},
-    {'name': '亚马逊', 'icon': Icons.language, 'color': Colors.blueGrey},
-    {'name': '闲鱼', 'icon': Icons.recycling, 'color': Colors.yellow},
-    {'name': '转转', 'icon': Icons.sync_alt, 'color': Colors.red},
-    {'name': '线下实体店', 'icon': Icons.storefront, 'color': Colors.green},
-    {'name': '其它', 'icon': Icons.more_horiz, 'color': Colors.grey},
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final selectedItem = platforms.firstWhere(
-      (p) => p['name'] == selectedPlatform,
-      orElse: () => {'name': '', 'icon': Icons.shopping_bag, 'color': Colors.grey},
+    // Find the current platform model, or default to custom/unknown
+    final selectedModel = PlatformConfig.shoppingPlatforms.firstWhere(
+      (p) => p.name == selectedPlatform,
+      orElse: () => PlatformModel(
+        name: selectedPlatform ?? '',
+        icon: Icons.shopping_bag,
+        color: Colors.grey,
+      ),
     );
 
     return Column(
@@ -46,9 +38,11 @@ class PlatformPicker extends StatelessWidget {
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(selectedItem['icon'] as IconData, 
-                           size: 20, 
-                           color: selectedItem['color'] as Color),
+                      Icon(
+                        selectedModel.icon,
+                        size: 20,
+                        color: selectedModel.color,
+                      ),
                       const SizedBox(width: 8),
                       Text(selectedPlatform!),
                     ],
@@ -67,38 +61,37 @@ class PlatformPicker extends StatelessWidget {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(16),
         width: double.infinity,
+        height: 500, // Fixed height for existing scroll
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '选择购买平台',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('选择购买平台', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: platforms.map((platform) {
-                final isSelected = selectedPlatform == platform['name'];
-                return ChoiceChip(
-                  label: Text(platform['name'] as String),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      onPlatformSelected(platform['name'] as String);
-                      Navigator.pop(ctx);
-                    }
-                  },
-                  avatar: Icon(
-                    platform['icon'] as IconData,
-                    size: 18,
-                    color: platform['color'] as Color,
-                  ),
-                );
-              }).toList(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: PlatformConfig.shoppingPlatforms.map((platform) {
+                    final isSelected = selectedPlatform == platform.name;
+                    return ChoiceChip(
+                      label: Text(platform.name),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          onPlatformSelected(platform.name);
+                          Navigator.pop(ctx);
+                        }
+                      },
+                      avatar: Icon(
+                        platform.icon,
+                        size: 18,
+                        color: platform.color,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
             ),
-            const SizedBox(height: 32),
           ],
         ),
       ),

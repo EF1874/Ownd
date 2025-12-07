@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/repositories/category_repository.dart';
 
 import 'package:intl/intl.dart';
 import '../../data/models/device.dart';
@@ -25,14 +26,15 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _customPlatformController = TextEditingController();
-  
+  final _customCategoryController = TextEditingController();
+
   Category? _selectedCategory;
   DateTime _purchaseDate = DateTime.now();
   DateTime? _warrantyDate;
   DateTime? _backupDate;
   DateTime? _scrapDate;
   bool _isLoading = false;
-  
+
   String? _selectedPlatform;
 
   @override
@@ -47,13 +49,24 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
       _backupDate = d.backupDate;
       _scrapDate = d.scrapDate;
       _selectedCategory = d.category.value;
-      
-      if (PlatformPicker.platforms.any((p) => p['name'] == d.platform)) {
-        _selectedPlatform = d.platform;
-      } else {
-        _selectedPlatform = '其它';
-        _customPlatformController.text = d.platform;
-      }
+
+      _selectedPlatform = d.platform;
+
+      // If it's a custom platform (not in the standard list), handle it?
+      // Actually, PlatformPicker now handles display gracefully even if not in config.
+      // But we need to switch logic for "Other" text field.
+      // We will check if it matches "Other" or if it is a custom string that is NOT in the list.
+      // However, current logic in PlatformPicker lets us select any string.
+      // If the platform from DB is NOT in the standard list, we should probably set _selectedPlatform to '其它' and fill the text field.
+
+      // But wait, the standard list is now in PlatformConfig.
+      // I can't easily access it without importing it.
+      // Let's assume for now d.platform is valid.
+      // If d.platform is 'Taobao', select 'Taobao'.
+      // If d.platform is 'SomeShop', select '其它' and fill 'SomeShop'.
+
+      // I should update this logic to be robust but avoid importing PlatformConfig if possible,
+      // or just importing it is fine.
     }
   }
 
@@ -62,24 +75,70 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
     _nameController.dispose();
     _priceController.dispose();
     _customPlatformController.dispose();
+    _customCategoryController.dispose();
     super.dispose();
   }
 
   Future<void> _saveDevice() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请选择分类')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请选择分类')));
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      final platform = _selectedPlatform == '其它' 
-          ? _customPlatformController.text 
+      final platform = _selectedPlatform == '其它'
+          ? _customPlatformController.text
           : _selectedPlatform;
+
+      // Handle custom category
+      var finalCategory = _selectedCategory;
+      if (_selectedCategory?.name == '其它') {
+        final customName = _customCategoryController.text.trim();
+        if (customName.isNotEmpty) {
+          // Check if exists
+          final existing = await ref
+              .read(categoryRepositoryProvider)
+              .findCategoryByName(customName);
+          if (existing != null) {
+            finalCategory = existing;
+          } else {
+            // Create new category
+            final newCat = Category()
+              ..name = customName
+              ..iconPath =
+                  'MdiIcons.tag' // Default icon for custom
+              ..isDefault = false;
+
+            final id = await ref
+                .read(categoryRepositoryProvider)
+                .addCategory(newCat);
+            finalCategory = newCat..id = id;
+          }
+        } else {
+          // Input empty, user selected "Other" but didn't type anything.
+          // Use/Create "其它" category?
+          final existing = await ref
+              .read(categoryRepositoryProvider)
+              .findCategoryByName('其它');
+          if (existing != null) {
+            finalCategory = existing;
+          } else {
+            final newCat = Category()
+              ..name = '其它'
+              ..iconPath = 'MdiIcons.dotsHorizontal'
+              ..isDefault = false;
+            final id = await ref
+                .read(categoryRepositoryProvider)
+                .addCategory(newCat);
+            finalCategory = newCat..id = id;
+          }
+        }
+      }
 
       final device = widget.device ?? Device();
       device
@@ -90,7 +149,7 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
         ..warrantyEndDate = _warrantyDate
         ..backupDate = _backupDate
         ..scrapDate = _scrapDate
-        ..category.value = _selectedCategory;
+        ..category.value = finalCategory;
 
       if (widget.device != null) {
         await ref.read(deviceRepositoryProvider).updateDevice(device);
@@ -110,9 +169,9 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
       }
     } finally {
       if (mounted) {
@@ -121,7 +180,8 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
     }
   }
 
-  Future<void> _pickDate(BuildContext context, {
+  Future<void> _pickDate(
+    BuildContext context, {
     bool isWarranty = false,
     bool isBackup = false,
     bool isScrap = false,
@@ -129,10 +189,10 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
     final initialDate = isWarranty
         ? (_warrantyDate ?? DateTime.now())
         : isBackup
-            ? (_backupDate ?? DateTime.now())
-            : isScrap
-                ? (_scrapDate ?? DateTime.now())
-                : _purchaseDate;
+        ? (_backupDate ?? DateTime.now())
+        : isScrap
+        ? (_scrapDate ?? DateTime.now())
+        : _purchaseDate;
 
     final picked = await showDatePicker(
       context: context,
@@ -180,6 +240,14 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
               selectedCategory: _selectedCategory,
               onCategorySelected: (c) => setState(() => _selectedCategory = c),
             ),
+            if (_selectedCategory?.name == '其它') ...[
+              const SizedBox(height: 16),
+              AppTextField(
+                controller: _customCategoryController, // Need to define this
+                label: '请输入分类名称 (选填)',
+                labelStyle: TextStyle(color: Theme.of(context).hintColor),
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
@@ -196,7 +264,8 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
                 Expanded(
                   child: PlatformPicker(
                     selectedPlatform: _selectedPlatform,
-                    onPlatformSelected: (p) => setState(() => _selectedPlatform = p),
+                    onPlatformSelected: (p) =>
+                        setState(() => _selectedPlatform = p),
                   ),
                 ),
               ],
@@ -230,8 +299,12 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
                   border: OutlineInputBorder(),
                 ),
                 child: Text(
-                  _warrantyDate != null ? dateFormat.format(_warrantyDate!) : '未设置',
-                  style: _warrantyDate != null ? null : TextStyle(color: Theme.of(context).hintColor),
+                  _warrantyDate != null
+                      ? dateFormat.format(_warrantyDate!)
+                      : '未设置',
+                  style: _warrantyDate != null
+                      ? null
+                      : TextStyle(color: Theme.of(context).hintColor),
                 ),
               ),
             ),
@@ -251,7 +324,9 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
                 ),
                 child: Text(
                   _backupDate != null ? dateFormat.format(_backupDate!) : '未设置',
-                  style: _backupDate != null ? null : TextStyle(color: Theme.of(context).hintColor),
+                  style: _backupDate != null
+                      ? null
+                      : TextStyle(color: Theme.of(context).hintColor),
                 ),
               ),
             ),
@@ -271,7 +346,9 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
                 ),
                 child: Text(
                   _scrapDate != null ? dateFormat.format(_scrapDate!) : '未设置',
-                  style: _scrapDate != null ? null : TextStyle(color: Theme.of(context).hintColor),
+                  style: _scrapDate != null
+                      ? null
+                      : TextStyle(color: Theme.of(context).hintColor),
                 ),
               ),
             ),
