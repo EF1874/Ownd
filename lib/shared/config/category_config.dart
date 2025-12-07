@@ -11,6 +11,7 @@ import 'categories/personal_care.dart';
 import 'categories/sports.dart';
 import 'categories/vehicles.dart';
 import 'categories/books.dart';
+import 'categories/entertainment.dart';
 import 'categories/health.dart';
 import 'categories/other.dart';
 
@@ -27,6 +28,7 @@ class CategoryConfig {
     ...sportsCategories,
     ...vehiclesCategories,
     ...booksCategories,
+    ...entertainmentCategories,
     ...healthCategories,
     ...otherCategories,
   ];
@@ -41,6 +43,7 @@ class CategoryConfig {
     '户外运动': sportsCategories.map((e) => e.name).toList(),
     '出行交通': vehiclesCategories.map((e) => e.name).toList(),
     '书籍影音': booksCategories.map((e) => e.name).toList(),
+    '娱乐游戏': entertainmentCategories.map((e) => e.name).toList(),
     '医疗健康': healthCategories.map((e) => e.name).toList(),
   };
 
@@ -54,10 +57,47 @@ class CategoryConfig {
     '户外运动': MdiIcons.basketball,
     '出行交通': MdiIcons.car,
     '书籍影音': MdiIcons.bookOpenPageVariant,
+    '娱乐游戏': MdiIcons.controller,
     '医疗健康': MdiIcons.medicalBag,
   };
 
+  static final Map<String, String> majorCategoryIconStrings = {
+    '数码电子': 'MdiIcons.cellphone',
+    '虚拟订阅 & 会员': 'MdiIcons.youtubeSubscription',
+    '家用电器': 'MdiIcons.washingMachine',
+    '家具家装': 'MdiIcons.sofa',
+    '服饰鞋包': 'MdiIcons.tshirtCrew',
+    '个护美妆': 'MdiIcons.lipstick',
+    '户外运动': 'MdiIcons.basketball',
+    '出行交通': 'MdiIcons.car',
+    '书籍影音': 'MdiIcons.bookOpenPageVariant',
+    '娱乐游戏': 'MdiIcons.controller',
+    '医疗健康': 'MdiIcons.medicalBag',
+  };
+
+  static final Map<String, Color> majorCategoryColors = {
+    '数码电子': Colors.blue,
+    '虚拟订阅 & 会员': Colors.purple,
+    '家用电器': Colors.blueGrey,
+    '家具家装': Colors.brown,
+    '服饰鞋包': Colors.pink,
+    '个护美妆': Colors.pinkAccent,
+    '户外运动': Colors.orange,
+    '出行交通': Colors.green,
+    '书籍影音': Colors.indigo,
+    '娱乐游戏': Colors.purple,
+    '医疗健康': Colors.red,
+  };
+
   static CategoryItem getItem(String? name) {
+    // Check key for Major Category first
+    if (name != null && majorCategoryColors.containsKey(name)) {
+      return CategoryItem(
+        name: name,
+        iconPath: majorCategoryIconStrings[name] ?? 'MdiIcons.shape',
+        color: majorCategoryColors[name] ?? Colors.grey,
+      );
+    }
     return defaultCategories.firstWhere(
       (item) => item.name == name,
       orElse: () => defaultCategories.last,
@@ -66,6 +106,7 @@ class CategoryConfig {
 
   static String getMajorCategory(String? itemName) {
     if (itemName == null) return '其它';
+    if (hierarchy.containsKey(itemName)) return itemName;
     for (var entry in hierarchy.entries) {
       if (entry.value.contains(itemName)) {
         return entry.key;

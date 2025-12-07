@@ -23,10 +23,19 @@ class CategoryPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedColor = selectedCategory != null
-        ? (CategoryConfig.getItem(selectedCategory!.name).color ??
-              Theme.of(context).colorScheme.primary)
-        : Theme.of(context).colorScheme.primary;
+    Color? displayColor;
+    if (selectedCategory != null) {
+      // Direct lookup for Major Category color to ensure consistency
+      if (CategoryConfig.majorCategoryColors.containsKey(
+        selectedCategory!.name,
+      )) {
+        displayColor =
+            CategoryConfig.majorCategoryColors[selectedCategory!.name];
+      } else {
+        displayColor = CategoryConfig.getItem(selectedCategory!.name).color;
+      }
+    }
+    final selectedColor = displayColor ?? Theme.of(context).colorScheme.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +78,6 @@ class CategoryPicker extends ConsumerWidget {
           return _CategorySheetContent(
             onCategorySelected: (cat) {
               onCategorySelected(cat);
-              Navigator.pop(ctx);
             },
             selectedCategory: selectedCategory,
           );
@@ -94,16 +102,48 @@ class _CategorySheetContent extends ConsumerStatefulWidget {
 }
 
 class _CategorySheetContentState extends ConsumerState<_CategorySheetContent> {
-  String _selectedMajor = CategoryConfig.hierarchy.keys.first;
+  late String _selectedMajor;
+  late ScrollController _majorScrollController;
+  bool _selectionMade = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedMajor = CategoryConfig.hierarchy.keys.first;
+    _majorScrollController = ScrollController();
+
     if (widget.selectedCategory != null) {
-      _selectedMajor = CategoryConfig.getMajorCategory(
-        widget.selectedCategory!.name,
-      );
+      final name = widget.selectedCategory!.name;
+      // Robust check: if name is directly a Major Category, use it.
+      if (CategoryConfig.hierarchy.containsKey(name)) {
+        _selectedMajor = name;
+      } else {
+        _selectedMajor = CategoryConfig.getMajorCategory(name);
+      }
     }
+
+    // Scroll logic removed as requested
+  }
+
+  @override
+  void dispose() {
+    _majorScrollController.dispose();
+    super.dispose();
+  }
+
+  void _confirmMajorCategory() {
+    // Construct a Category object for the Major Category
+    final iconPath =
+        CategoryConfig.majorCategoryIconStrings[_selectedMajor] ??
+        'MdiIcons.shape';
+
+    final category = Category()
+      ..name = _selectedMajor
+      ..iconPath = iconPath
+      ..id = -2;
+
+    _selectionMade = true;
+    widget.onCategorySelected(category);
   }
 
   @override
@@ -111,135 +151,171 @@ class _CategorySheetContentState extends ConsumerState<_CategorySheetContent> {
     final categoriesAsync = ref.watch(categoriesProvider);
     final majorCategories = CategoryConfig.hierarchy.keys.toList();
 
-    return Container(
-      height: 500, // Increased height
-      padding: const EdgeInsets.only(top: 16),
-      width: double.infinity,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text('选择分类', style: Theme.of(context).textTheme.titleLarge),
-          ),
-          const SizedBox(height: 16),
-          // Level 1: Major Categories (Horizontal List)
-          SizedBox(
-            height: 48,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) {
+        if (didPop && !_selectionMade && widget.selectedCategory == null) {
+          _confirmMajorCategory();
+        } else if (didPop &&
+            !_selectionMade &&
+            widget.selectedCategory != null) {
+          // Check if we navigated away from the original Major selection
+          final originalMajor = CategoryConfig.getMajorCategory(
+            widget.selectedCategory!.name,
+          );
+          if (_selectedMajor != originalMajor) {
+            _confirmMajorCategory();
+          }
+        }
+      },
+      child: Container(
+        height: 500,
+        padding: const EdgeInsets.only(top: 16),
+        width: double.infinity,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: majorCategories.length,
-              separatorBuilder: (ctx, i) => const SizedBox(width: 8),
-              itemBuilder: (ctx, i) {
-                final major = majorCategories[i];
-                final isSelected = major == _selectedMajor;
-                return ChoiceChip(
-                  label: Text(major),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) setState(() => _selectedMajor = major);
-                  },
-                  showCheckmark: false,
-                  avatar: Icon(
-                    CategoryConfig.majorCategoryIcons[major] ?? Icons.circle,
-                    size: 16,
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.onPrimary
-                        : null,
-                  ),
-                );
-              },
+              child: Text(
+                '选择分类',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
-          ),
-          const Divider(height: 32),
-          // Level 2: Sub-categories
-          Expanded(
-            child: categoriesAsync.when(
-              data: (allCategories) {
-                // Get sub-categories for selected major
-                final subNames = CategoryConfig.hierarchy[_selectedMajor] ?? [];
+            const SizedBox(height: 16),
+            // Level 1: Major Categories (Horizontal List)
+            SizedBox(
+              height: 48,
+              child: ListView.separated(
+                controller: _majorScrollController,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: majorCategories.length,
+                separatorBuilder: (ctx, i) => const SizedBox(width: 8),
+                itemBuilder: (ctx, i) {
+                  final major = majorCategories[i];
+                  final isSelected = major == _selectedMajor;
+                  return ChoiceChip(
+                    label: Text(major),
+                    selected: isSelected,
+                    showCheckmark: false,
+                    onSelected: (selected) {
+                      if (selected) setState(() => _selectedMajor = major);
+                    },
+                    avatar: Icon(
+                      CategoryConfig.majorCategoryIcons[major] ?? Icons.circle,
+                      size: 16,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : CategoryConfig.majorCategoryColors[major],
+                    ),
+                  );
+                },
+              ),
+            ),
+            const Divider(height: 32),
+            // Level 2: Sub Categories (Grid)
+            Expanded(
+              child: categoriesAsync.when(
+                data: (allCategories) {
+                  final subNames =
+                      CategoryConfig.hierarchy[_selectedMajor] ?? [];
 
-                // Filter actual Category entities that match the names
-                // Also optionally create transient ones if not found?
-                // For this refactor, we assume DB has populated categories matching config.
-                // If not, we might miss some. But for "Add Device", we usually rely on pre-seeded data.
-                final visualCategories = allCategories
-                    .where((c) => subNames.contains(c.name))
-                    .toList();
+                  // Reconstruct visual categories with dynamic "Other"
+                  var displayNames = List<String>.from(subNames);
+                  if (!displayNames.contains('其它')) {
+                    displayNames.add('其它');
+                  }
 
-                // Append "Other" option
-                visualCategories.add(
-                  Category()
-                    ..name = '其它'
-                    ..iconPath = 'MdiIcons.dotsHorizontal'
-                    ..id = -1, // Temporary ID
-                );
+                  final visualCategories = displayNames.map((name) {
+                    // Try to find existing category from DB
+                    final found = allCategories.firstWhere(
+                      (c) => c.name == name,
+                      orElse: () => Category()
+                        ..name = name
+                        ..iconPath = CategoryConfig.getItem(name).iconPath
+                        ..id = -1,
+                    );
+                    // Fix icon for Other
+                    if (name == '其它') {
+                      found.iconPath = 'MdiIcons.dotsHorizontal';
+                    }
+                    return found;
+                  }).toList();
 
-                if (visualCategories.isEmpty && subNames.isNotEmpty) {
-                  // Fallback: If DB doesn't have them, we should probably allow selecting them anyway?
-                  // But current architecture expects an existing Category entity for the ID.
-                  // Showing a warning or just "all" might be safer if data is missing.
-                  // For now, let's show all that match the names.
-                }
+                  if (visualCategories.isEmpty) {
+                    return Center(
+                      child: Text(
+                        '暂无此类目数据',
+                        style: TextStyle(color: Theme.of(context).hintColor),
+                      ),
+                    );
+                  }
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (visualCategories.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            '暂无此类目数据',
-                            style: TextStyle(
-                              color: Theme.of(context).hintColor,
-                            ),
-                          ),
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: visualCategories.map((category) {
+                            final isSameId =
+                                widget.selectedCategory?.id == category.id;
+                            final isSameName =
+                                widget.selectedCategory?.name == category.name;
+                            final isSelected =
+                                (widget.selectedCategory != null) &&
+                                (isSameId ||
+                                    (widget.selectedCategory!.id < 0 &&
+                                        isSameName));
+
+                            final isOther = category.name == '其它';
+                            final itemConfig = isOther
+                                ? null
+                                : CategoryConfig.getItem(category.name);
+
+                            return ChoiceChip(
+                              label: Text(category.name),
+                              selected: isSelected,
+                              showCheckmark: false,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  _selectionMade = true;
+                                  widget.onCategorySelected(category);
+                                  Navigator.of(context).pop();
+                                } else {
+                                  // Deselect -> Return to Major
+                                  _confirmMajorCategory();
+                                }
+                              },
+                              avatar: Icon(
+                                IconUtils.getIconData(category.iconPath),
+                                size: 18,
+                                color: isOther
+                                    ? Colors.grey
+                                    : (itemConfig?.color ??
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.primary),
+                              ),
+                            );
+                          }).toList(),
                         ),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: visualCategories.map((category) {
-                          final isSelected =
-                              widget.selectedCategory?.id == category.id;
-                          final isOther = category.name == '其它';
-                          final itemConfig = isOther
-                              ? null
-                              : CategoryConfig.getItem(category.name);
-
-                          return ChoiceChip(
-                            label: Text(category.name),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              if (selected) {
-                                widget.onCategorySelected(category);
-                              }
-                            },
-                            avatar: Icon(
-                              IconUtils.getIconData(category.iconPath),
-                              size: 18,
-                              color: isOther
-                                  ? Colors.grey
-                                  : (itemConfig?.color ??
-                                        Theme.of(context).colorScheme.primary),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(
-                        height: 32 + MediaQuery.of(context).padding.bottom,
-                      ),
-                    ],
-                  ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+                        SizedBox(
+                          height: 32 + MediaQuery.of(context).padding.bottom,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (err, stack) => Center(child: Text('Error: $err')),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -12,6 +12,7 @@ import 'widgets/summary_card.dart';
 import 'widgets/device_list_item.dart';
 import 'widgets/device_grid_item.dart';
 import 'widgets/sticky_filter_delegate.dart';
+import '../../shared/config/platform_config.dart';
 
 final deviceListProvider = StreamProvider((ref) {
   final repository = ref.watch(deviceRepositoryProvider);
@@ -33,6 +34,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isFabInitialized = false;
 
   String? _selectedFilterCategory;
+  String? _selectedPlatformFilter;
 
   @override
   void initState() {
@@ -52,7 +54,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<Device> _processDevices(List<Device> devices) {
     var result = List<Device>.from(devices);
 
-    // Filter
+    // Filter by Name
     if (_searchController.text.isNotEmpty) {
       final query = _searchController.text.toLowerCase();
       result = result
@@ -60,12 +62,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           .toList();
     }
 
-    // Category Filter
+    // Filter by Category
     if (_selectedFilterCategory != null) {
       result = result.where((d) {
         final major = CategoryConfig.getMajorCategory(d.category.value?.name);
         return major == _selectedFilterCategory;
       }).toList();
+    }
+
+    // Filter by Platform
+    if (_selectedPlatformFilter != null) {
+      result = result
+          .where((d) => d.platform == _selectedPlatformFilter)
+          .toList();
     }
 
     // Sort
@@ -122,6 +131,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       const Text('Canghe 物历'),
                       const Spacer(),
+                      IconButton(
+                        icon: Icon(
+                          _isGridView ? Icons.view_list : Icons.grid_view,
+                        ),
+                        tooltip: _isGridView ? '列表视图' : '网格视图',
+                        onPressed: () {
+                          setState(() => _isGridView = !_isGridView);
+                          ref
+                              .read(preferencesServiceProvider)
+                              .setGridView(_isGridView);
+                        },
+                      ),
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.menu),
                         onSelected: (v) {
@@ -130,32 +151,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               const SnackBar(content: Text('主题切换暂未实现')),
                             );
                           } else if (v.startsWith('sort_')) {
-                            // Sort logic
                             final sortKey = v.substring(5);
                             setState(() => _sortBy = sortKey);
                             ref
                                 .read(preferencesServiceProvider)
                                 .setSortBy(sortKey);
-                          } else if (v == 'view_toggle') {
-                            setState(() => _isGridView = !_isGridView);
-                            ref
-                                .read(preferencesServiceProvider)
-                                .setGridView(_isGridView);
+                          } else if (v == 'platform_filter') {
+                            _showPlatformFilterDialog();
                           }
                         },
                         itemBuilder: (context) => [
                           PopupMenuItem(
-                            value: 'view_toggle',
+                            value: 'platform_filter',
                             child: Row(
                               children: [
                                 Icon(
-                                  _isGridView
-                                      ? Icons.view_list
-                                      : Icons.grid_view,
+                                  Icons.store,
                                   size: 20,
+                                  color: _selectedPlatformFilter != null
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
                                 ),
                                 const SizedBox(width: 8),
-                                Text(_isGridView ? '列表视图' : '网格视图'),
+                                Text(
+                                  _selectedPlatformFilter == null
+                                      ? '平台筛选'
+                                      : '平台: $_selectedPlatformFilter',
+                                ),
                               ],
                             ),
                           ),
@@ -289,6 +311,78 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showPlatformFilterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          child: Container(
+            width: 300,
+            constraints: const BoxConstraints(maxHeight: 400),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 8,
+                    left: 16,
+                    right: 16,
+                  ),
+                  child: Text(
+                    '选择平台',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      ListTile(
+                        dense: true,
+                        title: const Text('全部平台'),
+                        leading: _selectedPlatformFilter == null
+                            ? Icon(
+                                Icons.check,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary,
+                              )
+                            : const SizedBox(width: 20),
+                        onTap: () {
+                          setState(() => _selectedPlatformFilter = null);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ...PlatformConfig.shoppingPlatforms.map((p) {
+                        final isSelected = _selectedPlatformFilter == p.name;
+                        return ListTile(
+                          dense: true,
+                          leading: Icon(p.icon, size: 20, color: p.color),
+                          title: Text(p.name),
+                          trailing: isSelected
+                              ? Icon(
+                                  Icons.check,
+                                  size: 20,
+                                  color: Theme.of(context).colorScheme.primary,
+                                )
+                              : null,
+                          onTap: () {
+                            setState(() => _selectedPlatformFilter = p.name);
+                            Navigator.pop(context);
+                          },
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

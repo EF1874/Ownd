@@ -37,6 +37,7 @@ class StickyFilterDelegate extends SliverPersistentHeaderDelegate {
                 return ChoiceChip(
                   label: Text(key),
                   selected: isSelected,
+                  showCheckmark: false,
                   onSelected: (selected) {
                     if (selected) {
                       onCategorySelected(isAll ? null : key);

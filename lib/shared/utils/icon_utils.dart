@@ -152,6 +152,35 @@ class IconUtils {
     'MdiIcons.thermometer': MdiIcons.thermometer,
     'MdiIcons.bandAid': MdiIcons.medicalBag, // Replacement
     'MdiIcons.faceMask': MdiIcons.faceMask,
+
+    // 11. Entertainment & Games
+    'MdiIcons.controller': MdiIcons.controller,
+    'MdiIcons.cellphonegame': MdiIcons.cellphone,
+    'MdiIcons.virtualReality': MdiIcons.virtualReality,
+    'MdiIcons.gameboy': MdiIcons.gamepadVariant, // Replacement
+    'MdiIcons.pacMan': MdiIcons.pacMan,
+    'MdiIcons.headsetDock': MdiIcons.headsetDock,
+    'MdiIcons.diceMultiple': MdiIcons.diceMultiple,
+    'MdiIcons.fileFind': MdiIcons.fileFind,
+    'MdiIcons.doorOpen': MdiIcons.doorOpen,
+    'MdiIcons.domino': MdiIcons.viewModule, // Replacement for Mahjong
+    'MdiIcons.cards': MdiIcons.cards,
+    'MdiIcons.chessKnight': MdiIcons.chessKnight,
+    'MdiIcons.bookOpenVariant': MdiIcons.bookOpenVariant,
+    'MdiIcons.popcorn': MdiIcons.popcorn,
+    'MdiIcons.microphoneVariant': MdiIcons.microphoneVariant,
+    'MdiIcons.ticketConfirmation': MdiIcons.ticketConfirmation,
+    'MdiIcons.ferrisWheel': MdiIcons.ferrisWheel,
+    'MdiIcons.toyBrick': MdiIcons.toyBrick,
+    'MdiIcons.giftOutline': MdiIcons.giftOutline,
+    'MdiIcons.hook': MdiIcons.hook,
+    'MdiIcons.desktopClassic': MdiIcons.desktopClassic,
+
+    // Generic / UI
+    'MdiIcons.shape': MdiIcons.shape,
+    'MdiIcons.tag': MdiIcons.tag,
+    'MdiIcons.viewDashboard': MdiIcons.viewDashboard,
+    'MdiIcons.dotsHorizontal': MdiIcons.dotsHorizontal,
   };
 
   static IconData getIconData(String iconName) {
