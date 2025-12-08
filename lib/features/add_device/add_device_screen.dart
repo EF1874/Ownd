@@ -50,6 +50,12 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
   bool _discount = false;
   double _totalAccumulatedPrice = 0.0;
 
+  DateTime? _originalNextBillingDate;
+  CycleType? _originalCycleType;
+  bool _hasPendingRenewal = false;
+  double _lastRenewPrice = 0.0;
+  DateTime? _preRenewalNextBillingDate;
+
   bool get _isSub =>
       CategoryConfig.getMajorCategory(_selectedCategory?.name) == '虚拟订阅';
 
@@ -69,11 +75,12 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
       _cycleType = d.cycleType;
       _isAutoRenew = d.isAutoRenew;
       _nextBillingDate = d.nextBillingDate;
-      _reminderDays = d.reminderDays;
       _hasReminder = d.hasReminder;
       _firstPriceCtr.text = d.firstPeriodPrice?.toString() ?? '';
       _discount = d.firstPeriodPrice != null;
       _totalAccumulatedPrice = d.totalAccumulatedPrice;
+      _originalNextBillingDate = d.nextBillingDate;
+      _originalCycleType = d.cycleType;
     }
   }
 
@@ -179,6 +186,16 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
         ..periodPrice = _isSub ? double.parse(_priceCtr.text) : null
         ..totalAccumulatedPrice = _totalAccumulatedPrice;
 
+      // Pruning Logic: Remove history records that are "in the future" relative to the new billing date
+      if (_isSub && _nextBillingDate != null) {
+        // Ensure history is mutable
+        device.history = device.history.toList();
+        device.history.removeWhere((h) {
+          final end = h.endDate;
+          return end != null && end.isAfter(_nextBillingDate!);
+        });
+      }
+
       if (widget.device == null && _isSub) {
         device.totalAccumulatedPrice = device.firstPeriodPrice ?? device.price;
       }
@@ -218,18 +235,61 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
     if (result != null && mounted) {
       final newCycle = result['cycle'] as CycleType;
       final renewPrice = result['price'] as double;
+      final renewalDate = result['date'] as DateTime;
+
       setState(() {
-        if (widget.device != null)
+        // Idempotency: Revert previous renewal attempt in this session
+        if (_hasPendingRenewal && widget.device != null) {
+          if (widget.device!.history.isNotEmpty) {
+            // Ensure mutable before removing
+            widget.device!.history = widget.device!.history.toList();
+            widget.device!.history.removeLast();
+          }
+          _totalAccumulatedPrice -= _lastRenewPrice;
+          _nextBillingDate = _preRenewalNextBillingDate;
+        } else {
+          // First renewal in this session, save state
+          _preRenewalNextBillingDate = _nextBillingDate;
+        }
+
+        if (widget.device != null) {
+          final isOriginallyExpired =
+              _originalNextBillingDate == null ||
+              _originalNextBillingDate!.isBefore(DateTime.now());
+
+          // The cycle ends at the *current* nextBillingDate (or now if null)
+          // The start of the *new* cycle is effectively this date.
+          final cycleEndDate = _nextBillingDate ?? DateTime.now();
+
           widget.device!.snapshotCurrentSubscription(
-            endDate: _nextBillingDate ?? DateTime.now(),
+            endDate: cycleEndDate,
+            recordDate: renewalDate,
           );
-        _cycleType = newCycle;
-        _nextBillingDate = SubscriptionUtils.calculateNextBillingDate(
-          _nextBillingDate ?? DateTime.now(),
-          newCycle,
-        );
+
+          // Calculate NEW nextBillingDate based on the OLD end date (continuity)
+          _nextBillingDate = SubscriptionUtils.calculateNextBillingDate(
+            cycleEndDate,
+            newCycle,
+          );
+
+          // Only update the displayed cycle type if the subscription was already expired
+          if (isOriginallyExpired) {
+            _cycleType = newCycle;
+          }
+        } else {
+          // New device fallback
+          _nextBillingDate = SubscriptionUtils.calculateNextBillingDate(
+            _nextBillingDate ?? DateTime.now(),
+            newCycle,
+          );
+          _cycleType = newCycle;
+        }
+
         _totalAccumulatedPrice += renewPrice;
         _priceCtr.text = renewPrice.toString();
+
+        _hasPendingRenewal = true;
+        _lastRenewPrice = renewPrice;
       });
       _showSnack('已更新续费状态，请点击保存');
     }
@@ -238,6 +298,7 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: Text(widget.device != null ? '编辑物品' : '添加物品')),
       body: Column(
         children: [

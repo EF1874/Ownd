@@ -30,7 +30,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
                 selectedIndex: index,
                 onDestinationSelected: (int idx) => _onItemTapped(idx, context),
                 destinations: const [
-                  NavigationDestination(icon: Icon(Icons.devices), label: '设备'),
+                  NavigationDestination(icon: Icon(Icons.devices), label: '资产'),
                   NavigationDestination(
                     icon: Icon(Icons.add_circle_outline),
                     selectedIcon: Icon(Icons.add_circle),

@@ -82,14 +82,18 @@ class Device {
     return 'active';
   }
 
-  void snapshotCurrentSubscription({required DateTime endDate}) {
+  void snapshotCurrentSubscription({
+    required DateTime endDate,
+    DateTime? recordDate,
+  }) {
     if (cycleType == null) return;
 
     final historyEntry = SubscriptionHistory()
       ..endDate = endDate
       ..price = price
       ..isAutoRenew = false
-      ..cycleType = cycleType!;
+      ..cycleType = cycleType!
+      ..recordDate = recordDate;
 
     DateTime calculatedStart = endDate.subtract(
       SubscriptionUtils.getDuration(cycleType!),
@@ -103,6 +107,8 @@ class Device {
       }
     }
 
+    // Ensure list is growable
+    history = history.toList();
     historyEntry.startDate = calculatedStart;
     history.add(historyEntry);
   }
@@ -119,5 +125,6 @@ class SubscriptionHistory {
 
   bool isAutoRenew = false;
 
+  DateTime? recordDate;
   String? note;
 }

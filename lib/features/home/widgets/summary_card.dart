@@ -24,7 +24,9 @@ class SummaryCard extends StatelessWidget {
     // 3. Status label changes (Expired for Subs, Retired for Physical).
     // 4. Value shows single sum (not split).
 
-    final bool useAll = filteredDevices.isEmpty;
+    // If filtered list is empty AND no category is selected, show ALL items stats.
+    // If a category IS selected, show 0 stats for that category.
+    final bool useAll = filteredDevices.isEmpty && categoryName == null;
     final List<Device> targetDevices = useAll ? allDevices : filteredDevices;
 
     final String? displayCategory = useAll ? null : categoryName;
@@ -65,54 +67,49 @@ class SummaryCard extends StatelessWidget {
     final majorCat = CategoryConfig.getMajorCategory(displayCategory);
     if (majorCat == '虚拟订阅') {
       scrapLabel = '已到期';
-    } else if (majorCat != null) {
-      // Assume physical for others
+    } else // Assume physical for others
       scrapLabel = '已退役';
-    }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: BaseCard(
-        color: Theme.of(context).colorScheme.primary,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildStatItem(
-                    context,
-                    title,
-                    '¥${totalValue.toStringAsFixed(0)}',
-                    isLight: true,
-                  ),
-                  _buildStatItem(
-                    context,
-                    '日均花费',
-                    '¥${dailyCost.toStringAsFixed(2)}',
-                    isLight: true,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(color: Colors.white24, height: 1),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '总数: ${targetDevices.length}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                  Text(
-                    '$scrapLabel: $scrapCount',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
-              ),
-            ],
-          ),
+    return BaseCard(
+      color: Theme.of(context).colorScheme.primary,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStatItem(
+                  context,
+                  title,
+                  '¥${totalValue.toStringAsFixed(0)}',
+                  isLight: true,
+                ),
+                _buildStatItem(
+                  context,
+                  '日均花费',
+                  '¥${dailyCost.toStringAsFixed(2)}',
+                  isLight: true,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Divider(color: Colors.white24, height: 1),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '总数: ${targetDevices.length}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+                Text(
+                  '$scrapLabel: $scrapCount',
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     ).animate().fadeIn().slideY();

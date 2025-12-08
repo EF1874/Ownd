@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../../data/models/device.dart';
 
 class RenewDialog extends StatefulWidget {
@@ -18,12 +19,14 @@ class RenewDialog extends StatefulWidget {
 class _RenewDialogState extends State<RenewDialog> {
   late CycleType _selectedCycle;
   late double _renewPrice;
+  late DateTime _renewalDate;
 
   @override
   void initState() {
     super.initState();
     _selectedCycle = widget.initialCycleType;
     _renewPrice = widget.initialPrice;
+    _renewalDate = DateTime.now();
   }
 
   @override
@@ -75,6 +78,27 @@ class _RenewDialogState extends State<RenewDialog> {
             keyboardType: TextInputType.number,
             onChanged: (v) => _renewPrice = double.tryParse(v) ?? 0.0,
           ),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _renewalDate,
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) {
+                setState(() => _renewalDate = picked);
+              }
+            },
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: '续费日期',
+                border: OutlineInputBorder(),
+              ),
+              child: Text(DateFormat('yyyy-MM-dd').format(_renewalDate)),
+            ),
+          ),
         ],
       ),
       actions: [
@@ -87,6 +111,7 @@ class _RenewDialogState extends State<RenewDialog> {
             Navigator.pop(context, {
               'cycle': _selectedCycle,
               'price': _renewPrice,
+              'date': _renewalDate,
             });
           },
           child: const Text('确认'),

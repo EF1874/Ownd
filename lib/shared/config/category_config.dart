@@ -106,6 +106,13 @@ class CategoryConfig {
 
   static String getMajorCategory(String? itemName) {
     if (itemName == null) return '其它';
+    // Handle "Major-Other" case
+    if (itemName.endsWith('-其它')) {
+      final parts = itemName.split('-');
+      if (parts.length == 2 && hierarchy.containsKey(parts[0])) {
+        return parts[0];
+      }
+    }
     if (hierarchy.containsKey(itemName)) return itemName;
     for (var entry in hierarchy.entries) {
       if (entry.value.contains(itemName)) {

@@ -43,13 +43,12 @@ class HomeSliverAppBar extends StatelessWidget {
       expandedHeight: 130,
       title: Row(
         children: [
-          const Text('Canghe 物历'),
           const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: '添加物品',
-            onPressed: onAddDevice,
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.add),
+          //   tooltip: '添加物品',
+          //   onPressed: onAddDevice,
+          // ),
           IconButton(
             icon: Icon(isGridView ? Icons.view_list : Icons.grid_view),
             tooltip: isGridView ? '列表视图' : '网格视图',
@@ -170,7 +169,7 @@ class HomeSliverAppBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: AppTextField(
             controller: searchController,
-            label: '搜索设备...',
+            label: '搜索物品...',
             onChanged: (_) => onSearchChanged(),
             prefixIcon: const Icon(Icons.search),
           ),

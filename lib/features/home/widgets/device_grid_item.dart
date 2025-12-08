@@ -99,21 +99,57 @@ class DeviceGridItem extends ConsumerWidget {
             textAlign: TextAlign.center,
             text: TextSpan(
               children: [
-                TextSpan(
-                  text: '${device.daysUsed}',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.secondary,
-                    fontSize: 20,
+                if (CategoryConfig.getMajorCategory(
+                      device.category.value?.name,
+                    ) ==
+                    '虚拟订阅') ...[
+                  TextSpan(
+                    text: '剩余',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: '天',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
-                    fontSize: 12,
+                  TextSpan(
+                    text: () {
+                      if (device.nextBillingDate == null) return '0';
+                      final diff =
+                          device.nextBillingDate!
+                              .difference(DateTime.now())
+                              .inDays +
+                          1;
+                      return (diff < 0 ? 0 : diff).toString();
+                    }(),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.secondary,
+                      fontSize: 20,
+                    ),
                   ),
-                ),
+                  TextSpan(
+                    text: '天',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ] else ...[
+                  TextSpan(
+                    text: '${device.daysUsed}',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.secondary,
+                      fontSize: 20,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '天',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

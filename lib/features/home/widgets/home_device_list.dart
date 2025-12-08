@@ -23,10 +23,6 @@ class HomeDeviceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (processedDevices.isEmpty) {
-      return const SliverFillRemaining(child: Center(child: Text('暂无设备')));
-    }
-
     // Split logic
     List<Device> expiring = [];
     List<Device> normal = [];
@@ -57,7 +53,7 @@ class HomeDeviceList extends StatelessWidget {
     }
 
     return SliverPadding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       sliver: SliverMainAxisGroup(
         slivers: [
           // Summary Card (Placed here to use processed data)
@@ -76,7 +72,7 @@ class HomeDeviceList extends StatelessWidget {
                 child: Text(
                   '即将到期 / 续费',
                   style: TextStyle(
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -140,6 +136,41 @@ class HomeDeviceList extends StatelessWidget {
           if (normal.isEmpty && expiring.isNotEmpty)
             // Show nothing extra
             const SliverToBoxAdapter(child: SizedBox.shrink()),
+
+          if (processedDevices.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.inbox_outlined,
+                      size: 64,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '暂无数据',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '当前分类下没有相关物品',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                    const SizedBox(height: 32), // Visual balance
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -79,7 +79,7 @@ class SubscriptionSection extends StatelessWidget {
           onReminderDaysChanged: onReminderDaysChanged,
           onDiscountChanged: onDiscountChanged,
         ),
-        if (device != null)
+        if (device != null && !isAutoRenew)
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

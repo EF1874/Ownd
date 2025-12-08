@@ -11,7 +11,7 @@ final categoriesProvider = FutureProvider<List<Category>>((ref) async {
 
 class CategoryPicker extends ConsumerWidget {
   final Category? selectedCategory;
-  final ValueChanged<Category> onCategorySelected;
+  final ValueChanged<Category?> onCategorySelected;
 
   const CategoryPicker({
     super.key,
@@ -88,7 +88,7 @@ class CategoryPicker extends ConsumerWidget {
 }
 
 class _CategorySheetContent extends ConsumerStatefulWidget {
-  final ValueChanged<Category> onCategorySelected;
+  final ValueChanged<Category?> onCategorySelected;
   final Category? selectedCategory;
 
   const _CategorySheetContent({
@@ -261,17 +261,25 @@ class _CategorySheetContentState extends ConsumerState<_CategorySheetContent> {
                           spacing: 12,
                           runSpacing: 12,
                           children: visualCategories.map((category) {
+                            final isOther = category.name == '其它';
+
+                            // Improved selection check for scoped "Other"
                             final isSameId =
                                 widget.selectedCategory?.id == category.id;
                             final isSameName =
                                 widget.selectedCategory?.name == category.name;
+                            final isScopedOther =
+                                isOther &&
+                                widget.selectedCategory?.name ==
+                                    '$_selectedMajor-其它';
+
                             final isSelected =
                                 (widget.selectedCategory != null) &&
                                 (isSameId ||
                                     (widget.selectedCategory!.id < 0 &&
-                                        isSameName));
+                                        isSameName) ||
+                                    isScopedOther);
 
-                            final isOther = category.name == '其它';
                             final itemConfig = isOther
                                 ? null
                                 : CategoryConfig.getItem(category.name);
@@ -283,11 +291,21 @@ class _CategorySheetContentState extends ConsumerState<_CategorySheetContent> {
                               onSelected: (selected) {
                                 if (selected) {
                                   _selectionMade = true;
-                                  widget.onCategorySelected(category);
+                                  if (isOther) {
+                                    // Construct scoped Other category
+                                    final scopedOther = Category()
+                                      ..name = '$_selectedMajor-其它'
+                                      ..iconPath = 'MdiIcons.dotsHorizontal'
+                                      ..id = -1;
+                                    widget.onCategorySelected(scopedOther);
+                                  } else {
+                                    widget.onCategorySelected(category);
+                                  }
                                   Navigator.of(context).pop();
                                 } else {
-                                  // Deselect -> Return to Major
+                                  // Deselect -> Revert to Major Category
                                   _confirmMajorCategory();
+                                  Navigator.of(context).pop();
                                 }
                               },
                               avatar: Icon(

@@ -138,19 +138,49 @@ class DeviceListItem extends ConsumerWidget {
                   RichText(
                     text: TextSpan(
                       children: [
-                        TextSpan(
-                          text: '${device.daysUsed}',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
+                        if (isSubscription) ...[
+                          TextSpan(
+                            text: '剩余 ',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: ' 天',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          TextSpan(
+                            text: () {
+                              if (device.nextBillingDate == null) return '0';
+                              final diff =
+                                  device.nextBillingDate!
+                                      .difference(DateTime.now())
+                                      .inDays +
+                                  1;
+                              return (diff < 0 ? 0 : diff).toString();
+                            }(),
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
-                        ),
+                          TextSpan(
+                            text: ' 天',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ] else ...[
+                          TextSpan(
+                            text: '${device.daysUsed}',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' 天',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
