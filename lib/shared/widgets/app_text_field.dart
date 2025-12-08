@@ -14,6 +14,8 @@ class AppTextField extends StatelessWidget {
   final VoidCallback? onTap;
   final TextStyle? labelStyle;
 
+  final bool enabled;
+
   const AppTextField({
     super.key,
     this.controller,
@@ -26,6 +28,7 @@ class AppTextField extends StatelessWidget {
     this.validator,
     this.onChanged,
     this.readOnly = false,
+    this.enabled = true,
     this.onTap,
     this.labelStyle,
   });
@@ -47,6 +50,7 @@ class AppTextField extends StatelessWidget {
       validator: validator,
       onChanged: onChanged,
       readOnly: readOnly,
+      enabled: enabled,
       onTap: onTap,
     );
   }

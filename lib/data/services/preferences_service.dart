@@ -12,6 +12,7 @@ class PreferencesService {
 
   static const _keyIsGridView = 'is_grid_view';
   static const _keySortBy = 'sort_by';
+  static const _keyShowExpiringList = 'show_expiring_list';
 
   bool get isGridView => _prefs.getBool(_keyIsGridView) ?? false;
 
@@ -23,5 +24,11 @@ class PreferencesService {
 
   Future<void> setSortBy(String value) async {
     await _prefs.setString(_keySortBy, value);
+  }
+
+  bool get showExpiringList => _prefs.getBool(_keyShowExpiringList) ?? true;
+
+  Future<void> setShowExpiringList(bool value) async {
+    await _prefs.setBool(_keyShowExpiringList, value);
   }
 }

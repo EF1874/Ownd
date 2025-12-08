@@ -224,10 +224,6 @@ class DeviceListItem extends ConsumerWidget {
             } else if (diff <=
                 (device.reminderDays > 0 ? device.reminderDays : 3)) {
               badges.add(const StatusBadge(text: '即将到期', color: Colors.red));
-            } else {
-              badges.add(
-                const StatusBadge(text: '生效中', color: Color(0xFF5D3FD3)),
-              );
             }
           }
         } else {
@@ -244,8 +240,6 @@ class DeviceListItem extends ConsumerWidget {
         } else if (device.warrantyEndDate != null &&
             device.warrantyEndDate!.isBefore(DateTime.now())) {
           badges.add(const StatusBadge(text: '过期', color: Colors.orange));
-        } else {
-          badges.add(const StatusBadge(text: '在用', color: Color(0xFF5D3FD3)));
         }
       }
     }

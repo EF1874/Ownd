@@ -154,7 +154,9 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
 
       final device = widget.device ?? Device();
       device
-        ..name = _nameCtr.text
+        ..name = _nameCtr.text.trim().isEmpty
+            ? finalCat.name
+            : _nameCtr.text.trim()
         ..price = double.parse(_priceCtr.text)
         ..purchaseDate = _purchaseDate
         ..platform =
@@ -237,95 +239,113 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(widget.device != null ? '编辑物品' : '添加物品')),
-      body: NotificationListener<UserScrollNotification>(
-        onNotification: (n) {
-          if (n.direction == ScrollDirection.reverse)
-            ref.read(bottomNavBarVisibleProvider.notifier).state = false;
-          else if (n.direction == ScrollDirection.forward)
-            ref.read(bottomNavBarVisibleProvider.notifier).state = true;
-          return true;
-        },
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              BasicInfoSection(
-                nameController: _nameCtr,
-                priceController: _priceCtr,
-                customPlatformController: _platformCtr,
-                customCategoryController: _catCtr,
-                selectedCategory: _selectedCategory,
-                selectedPlatform: _selectedPlatform,
-                onCategorySelected: (c) {
-                  setState(() {
-                    _selectedCategory = c;
-                    if (_isSub) {
-                      if (_nextBillingDate == null) _calculateNextBilling();
-                      _isAutoRenew = false;
-                      _hasReminder = false;
-                    }
-                  });
-                },
-                onPlatformSelected: (p) =>
-                    setState(() => _selectedPlatform = p),
-              ),
-              const SizedBox(height: 16),
-              if (_isSub)
-                SubscriptionSection(
-                  priceController: _priceCtr,
-                  firstPeriodPriceController: _firstPriceCtr,
-                  totalAccumulatedPrice: _totalAccumulatedPrice,
-                  purchaseDate: _purchaseDate,
-                  nextBillingDate: _nextBillingDate,
-                  cycleType: _cycleType,
-                  isAutoRenew: _isAutoRenew,
-                  hasReminder: _hasReminder,
-                  reminderDays: _reminderDays,
-                  hasFirstPeriodDiscount: _discount,
-                  device: widget.device,
-                  onCycleTypeChanged: (v) => setState(() {
-                    _cycleType = v;
-                    _calculateNextBilling();
-                  }),
-                  onAutoRenewChanged: (v) => setState(() {
-                    _isAutoRenew = v;
-                    if (!v) _discount = false;
-                  }),
-                  onReminderChanged: (v) => setState(() => _hasReminder = v),
-                  onReminderDaysChanged: (v) =>
-                      setState(() => _reminderDays = v),
-                  onDiscountChanged: (v) => setState(() => _discount = v),
-                  onPickDate: () => _pickDate(),
-                  onPickBillingDate: () => _pickDate(isBilling: true),
-                  onShowRenewDialog: _showRenewDialog,
-                )
-              else
-                DateSection(
-                  purchaseDate: _purchaseDate,
-                  warrantyDate: _warrantyDate,
-                  backupDate: _backupDate,
-                  scrapDate: _scrapDate,
-                  onPickDate: (w, b, s, billing) => _pickDate(
-                    isWarranty: w,
-                    isBackup: b,
-                    isScrap: s,
-                    isBilling: billing,
-                  ),
-                  onClearBackupDate: (_) => setState(() => _backupDate = null),
-                  onClearScrapDate: (_) => setState(() => _scrapDate = null),
+      body: Column(
+        children: [
+          Expanded(
+            child: NotificationListener<UserScrollNotification>(
+              onNotification: (n) {
+                if (n.direction == ScrollDirection.reverse)
+                  ref.read(bottomNavBarVisibleProvider.notifier).state = false;
+                else if (n.direction == ScrollDirection.forward)
+                  ref.read(bottomNavBarVisibleProvider.notifier).state = true;
+                return true;
+              },
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    BasicInfoSection(
+                      nameController: _nameCtr,
+                      priceController: _priceCtr,
+                      customPlatformController: _platformCtr,
+                      customCategoryController: _catCtr,
+                      selectedCategory: _selectedCategory,
+                      selectedPlatform: _selectedPlatform,
+                      onCategorySelected: (c) {
+                        setState(() {
+                          _selectedCategory = c;
+                          if (c != null) {
+                            _nameCtr.text = c.name;
+                          }
+                          if (_isSub) {
+                            if (_nextBillingDate == null)
+                              _calculateNextBilling();
+                            _isAutoRenew = false;
+                            _hasReminder = false;
+                          }
+                        });
+                      },
+                      onPlatformSelected: (p) =>
+                          setState(() => _selectedPlatform = p),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_isSub)
+                      SubscriptionSection(
+                        priceController: _priceCtr,
+                        firstPeriodPriceController: _firstPriceCtr,
+                        totalAccumulatedPrice: _totalAccumulatedPrice,
+                        purchaseDate: _purchaseDate,
+                        nextBillingDate: _nextBillingDate,
+                        cycleType: _cycleType,
+                        isAutoRenew: _isAutoRenew,
+                        hasReminder: _hasReminder,
+                        reminderDays: _reminderDays,
+                        hasFirstPeriodDiscount: _discount,
+                        device: widget.device,
+                        onCycleTypeChanged: (v) => setState(() {
+                          _cycleType = v;
+                          _calculateNextBilling();
+                        }),
+                        onAutoRenewChanged: (v) => setState(() {
+                          _isAutoRenew = v;
+                          if (!v) _discount = false;
+                        }),
+                        onReminderChanged: (v) =>
+                            setState(() => _hasReminder = v),
+                        onReminderDaysChanged: (v) =>
+                            setState(() => _reminderDays = v),
+                        onDiscountChanged: (v) => setState(() => _discount = v),
+                        onPickDate: () => _pickDate(),
+                        onPickBillingDate: () => _pickDate(isBilling: true),
+                        onShowRenewDialog: _showRenewDialog,
+                      )
+                    else
+                      DateSection(
+                        purchaseDate: _purchaseDate,
+                        warrantyDate: _warrantyDate,
+                        backupDate: _backupDate,
+                        scrapDate: _scrapDate,
+                        onPickDate: (w, b, s, billing) => _pickDate(
+                          isWarranty: w,
+                          isBackup: b,
+                          isScrap: s,
+                          isBilling: billing,
+                        ),
+                        onClearBackupDate: (_) =>
+                            setState(() => _backupDate = null),
+                        onClearScrapDate: (_) =>
+                            setState(() => _scrapDate = null),
+                      ),
+                  ],
                 ),
-              const SizedBox(height: 32),
-              AppButton(
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              child: AppButton(
                 text: '保存',
                 onPressed: _saveDevice,
                 isLoading: _isLoading,
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

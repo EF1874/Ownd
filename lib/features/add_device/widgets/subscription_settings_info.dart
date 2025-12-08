@@ -128,44 +128,29 @@ class SubscriptionSettingsInfo extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: hasReminder
-                  ? DropdownButtonFormField<int>(
-                      decoration: const InputDecoration(
-                        labelText: '提醒天数',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 16,
-                        ),
-                      ),
-                      value: reminderDays,
-                      items: List.generate(10, (index) => index + 1)
-                          .map(
-                            (d) =>
-                                DropdownMenuItem(value: d, child: Text('$d天')),
-                          )
-                          .toList(),
-                      onChanged: (v) => onReminderDaysChanged(v ?? 1),
-                    )
-                  : Container(
-                      height: 58,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).disabledColor.withOpacity(0.3),
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        '未开启提醒',
-                        style: TextStyle(
-                          color: Theme.of(context).disabledColor,
-                        ),
+              child: IgnorePointer(
+                ignoring: !hasReminder,
+                child: Opacity(
+                  opacity: hasReminder ? 1.0 : 0.5,
+                  child: DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(
+                      labelText: '提醒天数',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
                       ),
                     ),
+                    value: reminderDays,
+                    items: List.generate(10, (index) => index + 1)
+                        .map(
+                          (d) => DropdownMenuItem(value: d, child: Text('$d天')),
+                        )
+                        .toList(),
+                    onChanged: (v) => onReminderDaysChanged(v ?? 1),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -197,16 +182,17 @@ class SubscriptionSettingsInfo extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: hasFirstPeriodDiscount
-                    ? AppTextField(
-                        controller: firstPeriodPriceController,
-                        label: '首期价格',
-                        keyboardType: TextInputType.number,
-                        labelStyle: TextStyle(
-                          color: Theme.of(context).hintColor,
-                        ),
-                      )
-                    : const SizedBox(),
+                child: AppTextField(
+                  controller: firstPeriodPriceController,
+                  label: '首期价格',
+                  enabled: hasFirstPeriodDiscount,
+                  keyboardType: TextInputType.number,
+                  labelStyle: TextStyle(
+                    color: hasFirstPeriodDiscount
+                        ? Theme.of(context).hintColor
+                        : Theme.of(context).disabledColor,
+                  ),
+                ),
               ),
             ],
           ),

@@ -44,7 +44,7 @@ class SubscriptionDateInfo extends StatelessWidget {
                 label: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(isAutoRenew ? '下次扣款' : '到期日'),
+                    Text('${isAutoRenew ? '下次扣款' : '到期日'}(自动计算)'),
                     if (nextBillingDate != null) ...[
                       const SizedBox(width: 4),
                       Builder(
