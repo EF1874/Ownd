@@ -26,7 +26,7 @@ class DataTransferService {
   Future<void> exportData() async {
     // 1. Ensure all data has UUIDs (Migration)
     await _isar.writeTxn(() async {
-      final devices = await _isar.devices.where().findAll();
+      // final devices = await _isar.devices.where().findAll();
       // for (final device in devices) {
       //   if (device.uuid == null) {
       //     device.uuid = const Uuid().v4();

@@ -8,6 +8,7 @@ import '../../../shared/config/category_config.dart';
 import '../../../shared/config/cost_config.dart';
 import '../../../shared/widgets/base_card.dart';
 import '../../../shared/widgets/status_badge.dart';
+import '../../../shared/utils/format_utils.dart';
 import '../../add_device/add_device_screen.dart';
 
 class DeviceGridItem extends ConsumerWidget {
@@ -166,7 +167,7 @@ class DeviceGridItem extends ConsumerWidget {
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: '¥${device.price.toStringAsFixed(0)}',
+                  text: '¥${FormatUtils.formatCurrency(device.price)}',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFFcf3d69),
                     fontWeight: FontWeight.bold,
@@ -175,7 +176,7 @@ class DeviceGridItem extends ConsumerWidget {
                 ),
                 const WidgetSpan(child: SizedBox(width: 4)),
                 TextSpan(
-                  text: '¥${dailyCost.toStringAsFixed(2)}',
+                  text: '¥${FormatUtils.formatCurrency(dailyCost)}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: (costColor ?? theme.colorScheme.onSurfaceVariant)
                         .withValues(alpha: 0.7),
@@ -252,7 +253,7 @@ class DeviceGridItem extends ConsumerWidget {
           badges.add(const StatusBadge(text: '备用', color: Colors.blue));
         } else if (device.warrantyEndDate != null &&
             device.warrantyEndDate!.isBefore(DateTime.now())) {
-          badges.add(const StatusBadge(text: '过期', color: Colors.orange));
+          badges.add(const StatusBadge(text: '过保', color: Colors.orange));
         }
       }
     }

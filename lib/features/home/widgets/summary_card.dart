@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../data/models/device.dart';
 import '../../../shared/widgets/base_card.dart';
 import '../../../shared/config/category_config.dart';
+import '../../../shared/utils/format_utils.dart';
 
 class SummaryCard extends StatelessWidget {
   final List<Device> filteredDevices;
@@ -82,13 +83,13 @@ class SummaryCard extends StatelessWidget {
                 _buildStatItem(
                   context,
                   title,
-                  '¥${totalValue.toStringAsFixed(0)}',
+                  '¥${FormatUtils.formatCurrency(totalValue)}',
                   isLight: true,
                 ),
                 _buildStatItem(
                   context,
                   '日均花费',
-                  '¥${dailyCost.toStringAsFixed(2)}',
+                  '¥${FormatUtils.formatCurrency(dailyCost)}',
                   isLight: true,
                 ),
               ],
