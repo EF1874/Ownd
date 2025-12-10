@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = device_manager
+PRODUCT_NAME = ownd
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.antigravity.devicemanager.deviceManager
+PRODUCT_BUNDLE_IDENTIFIER = com.antigravity.ownd
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2025 com.antigravity.devicemanager. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2025 com.antigravity.ownd. All rights reserved.

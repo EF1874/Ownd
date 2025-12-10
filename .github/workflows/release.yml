@@ -4,6 +4,10 @@ on:
     push:
         tags:
             - 'v*'
+        branches:
+            - 'main'
+        paths:
+            - 'pubspec.yaml'
     workflow_dispatch:
 
 permissions:
@@ -31,12 +35,44 @@ jobs:
             - name: Install Dependencies
               run: flutter pub get
 
+            - name: Get Version
+              id: get_version
+              shell: bash
+              run: |
+                  VERSION=$(grep 'version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
+                  echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Create Tag if Needed
+              id: create_tag
+              run: |
+                  VERSION=${{ steps.get_version.outputs.VERSION }}
+                  TAG_NAME="v$VERSION"
+                  
+                  # Fetch tags to check existence
+                  git fetch --tags
+                  
+                  if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+                    echo "Tag $TAG_NAME already exists. Skipping auto-tag."
+                    echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
+                  else
+                    echo "Tag $TAG_NAME does not exist. Creating..."
+                    git config --global user.name "GitHub Actions"
+                    git config --global user.email "actions@github.com"
+                    git tag $TAG_NAME
+                    git push origin $TAG_NAME
+                    echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
+                  fi
+
             - name: Build APK
-              run: flutter build apk --release
+              run: flutter build apk --release --build-number=${{ github.run_number }}
+
+            - name: Rename APK
+              run: |
+                  mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Ownd_v${{ steps.get_version.outputs.VERSION }}_${{ github.run_number }}.apk
 
             - name: Create Release
               uses: softprops/action-gh-release@v2
-              if: startsWith(github.ref, 'refs/tags/')
               with:
-                  files: build/app/outputs/flutter-apk/app-release.apk
+                  tag_name: v${{ steps.get_version.outputs.VERSION }}
+                  files: build/app/outputs/flutter-apk/Ownd_v${{ steps.get_version.outputs.VERSION }}_${{ github.run_number }}.apk
                   generate_release_notes: true

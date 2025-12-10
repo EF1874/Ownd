@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.antigravity.devicemanager" "\0"
-            VALUE "FileDescription", "device_manager" "\0"
+            VALUE "CompanyName", "com.antigravity.ownd" "\0"
+            VALUE "FileDescription", "ownd" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "device_manager" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.antigravity.devicemanager. All rights reserved." "\0"
-            VALUE "OriginalFilename", "device_manager.exe" "\0"
-            VALUE "ProductName", "device_manager" "\0"
+            VALUE "InternalName", "ownd" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.antigravity.ownd. All rights reserved." "\0"
+            VALUE "OriginalFilename", "ownd.exe" "\0"
+            VALUE "ProductName", "Ownd" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

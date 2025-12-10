@@ -1,6 +1,6 @@
 {
-    "name": "device_manager",
-    "short_name": "device_manager",
+    "name": "ownd",
+    "short_name": "ownd",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#hex_code",

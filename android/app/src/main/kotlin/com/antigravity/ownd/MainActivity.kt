@@ -1,4 +1,4 @@
-package com.antigravity.devicemanager.device_manager
+package com.antigravity.ownd
 
 import io.flutter.embedding.android.FlutterActivity
 
