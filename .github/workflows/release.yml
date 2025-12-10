@@ -21,52 +21,68 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Setup Java
-              uses: actions/setup-java@v4
-              with:
-                  distribution: 'zulu'
-                  java-version: '17'
-
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  channel: 'stable'
-
-            - name: Install Dependencies
-              run: flutter pub get
-
             - name: Get Version
               id: get_version
               shell: bash
               run: |
                   VERSION=$(grep 'version:' pubspec.yaml | cut -d ' ' -f 2 | cut -d '+' -f 1)
                   echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+                  echo "Detected Version: $VERSION"
 
-            - name: Create Tag if Needed
-              id: create_tag
+            - name: Check and Create Tag
+              id: check_tag
+              shell: bash
               run: |
                   VERSION=${{ steps.get_version.outputs.VERSION }}
                   TAG_NAME="v$VERSION"
                   
-                  # Fetch tags to check existence
+                  # Fetch tags to ensure we can check for existence
                   git fetch --tags
                   
-                  if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
-                    echo "Tag $TAG_NAME already exists. Skipping auto-tag."
-                    echo "TAG_EXISTS=true" >> $GITHUB_OUTPUT
+                  SHOULD_BUILD="false"
+
+                  if [[ "${{ github.ref_type }}" == "tag" ]]; then
+                      echo "Event is a tag push. Proceeding with build."
+                      SHOULD_BUILD="true"
                   else
-                    echo "Tag $TAG_NAME does not exist. Creating..."
-                    git config --global user.name "GitHub Actions"
-                    git config --global user.email "actions@github.com"
-                    git tag $TAG_NAME
-                    git push origin $TAG_NAME
-                    echo "TAG_EXISTS=false" >> $GITHUB_OUTPUT
+                      if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+                        echo "Tag $TAG_NAME already exists. Skipping build."
+                        SHOULD_BUILD="false"
+                      else
+                        echo "Tag $TAG_NAME does not exist. Creating new release tag..."
+                        git config --global user.name "GitHub Actions"
+                        git config --global user.email "actions@github.com"
+                        git tag $TAG_NAME
+                        git push origin $TAG_NAME
+                        SHOULD_BUILD="true"
+                      fi
                   fi
+                  
+                  echo "SHOULD_BUILD=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+
+            - name: Setup Java
+              if: steps.check_tag.outputs.SHOULD_BUILD == 'true'
+              uses: actions/setup-java@v4
+              with:
+                  distribution: 'zulu'
+                  java-version: '17'
+
+            - name: Setup Flutter
+              if: steps.check_tag.outputs.SHOULD_BUILD == 'true'
+              uses: subosito/flutter-action@v2
+              with:
+                  channel: 'stable'
+
+            - name: Install Dependencies
+              if: steps.check_tag.outputs.SHOULD_BUILD == 'true'
+              run: flutter pub get
 
             - name: Build APK
+              if: steps.check_tag.outputs.SHOULD_BUILD == 'true'
               run: flutter build apk --split-per-abi --release --build-number=${{ github.run_number }}
 
             - name: Rename APK
+              if: steps.check_tag.outputs.SHOULD_BUILD == 'true'
               run: |
                   cd build/app/outputs/flutter-apk/
                   for file in app-*-release.apk; do
@@ -75,6 +91,7 @@ jobs:
                   done
 
             - name: Create Release
+              if: steps.check_tag.outputs.SHOULD_BUILD == 'true'
               uses: softprops/action-gh-release@v2
               with:
                   tag_name: v${{ steps.get_version.outputs.VERSION }}
