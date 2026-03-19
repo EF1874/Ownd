@@ -246,7 +246,7 @@ class _CategorySheetContentState extends ConsumerState<_CategorySheetContent> {
 
     return PopScope(
       canPop: true,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop && !_selectionMade && widget.selectedCategory == null) {
           _confirmMajorCategory();
         } else if (didPop &&

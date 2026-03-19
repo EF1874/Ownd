@@ -31,8 +31,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _sortField = 'date'; // date, price, expiry
   bool _isAscending = false;
 
-  Set<String> _selectedCategories = CategoryConfig.hierarchy.keys.toSet();
+  Set<String> _selectedCategories = {};
   String? _selectedPlatformFilter;
+  final Set<String> _selectedTags = {};
 
   // State
   bool _showExpiringList = true;
@@ -77,6 +78,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       result = result
           .where((d) => d.platform == _selectedPlatformFilter)
           .toList();
+    }
+
+    // Filter by Tags
+    if (_selectedTags.isNotEmpty) {
+      result = result.where((d) {
+        return _selectedTags.every((tag) => d.tags.contains(tag));
+      }).toList();
     }
 
     // Sort
@@ -169,6 +177,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       },
                     ),
                   ),
+                  if (devicesAsync.valueOrNull != null && devicesAsync.valueOrNull!.any((d) => d.tags.isNotEmpty))
+                    SliverToBoxAdapter(
+                      child: Container(
+                        height: 48,
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        alignment: Alignment.centerLeft,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: [
+                            for (final tag in (devicesAsync.valueOrNull!.expand((d) => d.tags).toSet().toList()..sort()))
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+                                child: FilterChip(
+                                  label: Text('#$tag'),
+                                  labelStyle: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: _selectedTags.contains(tag) ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                  selected: _selectedTags.contains(tag),
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      if (selected) {
+                                        _selectedTags.add(tag);
+                                      } else {
+                                        _selectedTags.remove(tag);
+                                      }
+                                    });
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
                 devicesAsync.when(
                   data: (devices) {
                     final processed = _processDevices(devices);

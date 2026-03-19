@@ -25,6 +25,8 @@ import 'widgets/date_section.dart';
 import 'widgets/subscription_section.dart';
 import 'widgets/renew_dialog.dart';
 
+import 'widgets/additional_info_section.dart';
+
 part 'add_device_logic.dart';
 
 class AddDeviceScreen extends ConsumerStatefulWidget {
@@ -43,10 +45,13 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
   final _catCtr = TextEditingController();
   final _firstPriceCtr = TextEditingController();
   final _totalAccumulatedPriceCtr = TextEditingController();
+  final _notesCtr = TextEditingController();
+  final _tagsCtr = TextEditingController();
 
   Category? _selectedCategory;
   String? _selectedPlatform;
   String? _customIconPath;
+  String? _imagePath;
   bool _isLoading = false;
 
   DateTime _purchaseDate = DateTime.now();
@@ -87,6 +92,9 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
       _selectedCategory = d.category.value;
       _selectedPlatform = d.platform;
       _customIconPath = d.customIconPath;
+      _imagePath = d.imagePath;
+      _notesCtr.text = d.notes ?? '';
+      _tagsCtr.text = d.tags.join(', ');
       _cycleType = d.cycleType;
       _isAutoRenew = d.isAutoRenew;
       _nextBillingDate = d.nextBillingDate;
@@ -124,6 +132,8 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
     _catCtr.dispose();
     _firstPriceCtr.dispose();
     _totalAccumulatedPriceCtr.dispose();
+    _notesCtr.dispose();
+    _tagsCtr.dispose();
     super.dispose();
   }
   
@@ -131,13 +141,15 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image == null) return;
+      if (!mounted) return;
+      final colorScheme = Theme.of(context).colorScheme;
 
       final croppedFile = await ImageCropper().cropImage(
         sourcePath: image.path,
         uiSettings: [
           AndroidUiSettings(
             toolbarTitle: '裁剪图片',
-            toolbarColor: Theme.of(context).colorScheme.primary,
+            toolbarColor: colorScheme.primary,
             toolbarWidgetColor: Colors.white,
             initAspectRatio: CropAspectRatioPreset.square,
             lockAspectRatio: false,
@@ -152,8 +164,6 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
         // Save to Application Documents Directory
         final appDir = await getApplicationDocumentsDirectory();
         final fileName = path.basename(croppedFile.path);
-        // Ensure unique name to avoid conflicts if needed, but basename is usually fine from cropper
-        // Or generate uuid
         final savedImage = await File(croppedFile.path).copy('${appDir.path}/$fileName');
         
         setState(() {
@@ -161,8 +171,29 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('选择图片失败: $e')),
+      );
+    }
+  }
+
+  Future<void> _pickPhoto() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+      if (image == null) return;
+
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}_${path.basename(image.path)}';
+      final savedImage = await File(image.path).copy('${appDir.path}/$fileName');
+      
+      setState(() {
+        _imagePath = savedImage.path;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('选择相片失败: $e')),
       );
     }
   }
@@ -170,6 +201,12 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
   void _removeCustomIcon() {
     setState(() {
       _customIconPath = null;
+    });
+  }
+
+  void _removePhoto() {
+    setState(() {
+      _imagePath = null;
     });
   }
 
@@ -183,10 +220,11 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
           Expanded(
             child: NotificationListener<UserScrollNotification>(
               onNotification: (n) {
-                if (n.direction == ScrollDirection.reverse)
+                if (n.direction == ScrollDirection.reverse) {
                   ref.read(bottomNavBarVisibleProvider.notifier).state = false;
-                else if (n.direction == ScrollDirection.forward)
+                } else if (n.direction == ScrollDirection.forward) {
                   ref.read(bottomNavBarVisibleProvider.notifier).state = true;
+                }
                 return true;
               },
               child: Form(
@@ -211,8 +249,9 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
                             _nameCtr.text = c.name;
                           }
                           if (_isSub) {
-                            if (_nextBillingDate == null)
+                            if (_nextBillingDate == null) {
                               _calculateNextBilling();
+                            }
                             _isAutoRenew = false;
                             _hasReminder = false;
                           }
@@ -273,6 +312,15 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
                         onClearScrapDate: (_) =>
                             setState(() => _scrapDate = null),
                       ),
+                    const SizedBox(height: 16),
+                    AdditionalInfoSection(
+                      notesController: _notesCtr,
+                      tagsController: _tagsCtr,
+                      imagePath: _imagePath,
+                      onPickImage: _pickPhoto,
+                      onRemoveImage: _removePhoto,
+                    ),
+                    const SizedBox(height: 48), // Padding at the bottom for scroll
                   ],
                 ),
               ),

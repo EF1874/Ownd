@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../data/models/device.dart';
 import '../../../shared/config/category_config.dart';
 import 'summary_card.dart';
@@ -58,10 +59,13 @@ class HomeDeviceList extends StatelessWidget {
         slivers: [
           // Summary Card (Placed here to use processed data)
           SliverToBoxAdapter(
-            child: SummaryCard(
-              filteredDevices: processedDevices,
-              allDevices: allDevices,
-              categoryName: categoryName,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: SummaryCard(
+                filteredDevices: processedDevices,
+                allDevices: allDevices,
+                categoryName: categoryName,
+              ),
             ),
           ),
           // Expiring Section
@@ -82,7 +86,7 @@ class HomeDeviceList extends StatelessWidget {
                 ? SliverGrid(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) =>
-                          DeviceGridItem(device: expiring[index]),
+                          DeviceGridItem(device: expiring[index], index: index),
                       childCount: expiring.length,
                     ),
                     gridDelegate:
@@ -96,7 +100,7 @@ class HomeDeviceList extends StatelessWidget {
                 : SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) =>
-                          DeviceListItem(device: expiring[index]),
+                          DeviceListItem(device: expiring[index], index: index),
                       childCount: expiring.length,
                     ),
                   ),
@@ -104,7 +108,7 @@ class HomeDeviceList extends StatelessWidget {
               child: Divider(
                 height: 32,
                 thickness: 1,
-                color: Theme.of(context).dividerColor.withOpacity(0.5),
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -114,7 +118,7 @@ class HomeDeviceList extends StatelessWidget {
             isGridView
                 ? SliverGrid(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) => DeviceGridItem(device: normal[index]),
+                      (context, index) => DeviceGridItem(device: normal[index], index: index + expiring.length),
                       childCount: normal.length,
                     ),
                     gridDelegate:
@@ -127,7 +131,7 @@ class HomeDeviceList extends StatelessWidget {
                   )
                 : SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (context, index) => DeviceListItem(device: normal[index]),
+                      (context, index) => DeviceListItem(device: normal[index], index: index + expiring.length),
                       childCount: normal.length,
                     ),
                   ),
@@ -149,7 +153,7 @@ class HomeDeviceList extends StatelessWidget {
                       size: 64,
                       color: Theme.of(
                         context,
-                      ).colorScheme.outline.withOpacity(0.5),
+                      ).colorScheme.outline.withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -168,7 +172,7 @@ class HomeDeviceList extends StatelessWidget {
                     ),
                     const SizedBox(height: 32), // Visual balance
                   ],
-                ),
+                ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.1, duration: 500.ms, curve: Curves.easeOutCubic),
               ),
             ),
         ],

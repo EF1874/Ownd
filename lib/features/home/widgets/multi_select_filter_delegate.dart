@@ -61,10 +61,10 @@ class MultiSelectFilterDelegate extends SliverPersistentHeaderDelegate {
                   ),
                   onSelected: (_) {
                      if (isSelected) {
-                       // Deselect All
+                       // Deselect All (turns off all chips, effectively returning to show-all default)
                        onSelectionChanged({});
                      } else {
-                       // Select All
+                       // Select All (turns on all chips, user can now deselect specific ones)
                        onSelectionChanged(allCategories.toSet());
                      }
                   },

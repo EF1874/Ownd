@@ -1,6 +1,8 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  exclude:
+    - '**/*.g.dart'
   plugins:
     - custom_lint
 
@@ -16,3 +18,4 @@ linter:
     - sort_child_properties_last
     - prefer_const_constructors
     - prefer_const_literals_to_create_immutables
+    - curly_braces_in_flow_control_structures

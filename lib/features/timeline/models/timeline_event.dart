@@ -16,6 +16,7 @@ class TimelineEvent {
   final TimelineEventType type;
   final double cost;
   final String? note;
+  final List<String> tags;
 
   TimelineEvent({
     required this.id,
@@ -27,6 +28,7 @@ class TimelineEvent {
     required this.type,
     required this.cost,
     this.note,
+    this.tags = const [],
   });
 }
 

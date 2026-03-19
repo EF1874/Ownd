@@ -87,6 +87,7 @@ class ProfileScreen extends ConsumerWidget {
                       final path = await transferService
                           .getBackupDirectoryPath();
                       if (Platform.isAndroid) {
+                        if (!context.mounted) return;
                         await _openDownloadFolder(context, path);
                       } else {
                         // iOS or others
@@ -100,9 +101,8 @@ class ProfileScreen extends ConsumerWidget {
                             }
                           }
                         } catch (e) {
-                          if (context.mounted) {
-                            _showPathDialog(context, path);
-                          }
+                          if (!context.mounted) return;
+                          _showPathDialog(context, path);
                         }
                       }
                     },
@@ -288,7 +288,7 @@ class ProfileScreen extends ConsumerWidget {
     const uri =
         'content://com.android.externalstorage.documents/document/primary%3ADownload%2FDeviceManager';
 
-    final intent = AndroidIntent(
+    const intent = AndroidIntent(
       action: 'android.intent.action.VIEW',
       data: uri,
       type: 'vnd.android.document/directory',
@@ -376,32 +376,31 @@ class ProfileScreen extends ConsumerWidget {
       builder: (context) => SimpleDialog(
         title: const Text('选择主题'),
         children: [
-          RadioListTile<ThemeMode>(
-            title: const Text('跟随系统'),
-            value: ThemeMode.system,
+          RadioGroup<ThemeMode>(
             groupValue: currentMode,
             onChanged: (value) {
-              ref.read(themeProvider.notifier).setThemeMode(value!);
-              Navigator.pop(context);
+              if (value != null) {
+                ref.read(themeProvider.notifier).setThemeMode(value);
+                Navigator.pop(context);
+              }
             },
-          ),
-          RadioListTile<ThemeMode>(
-            title: const Text('亮色模式'),
-            value: ThemeMode.light,
-            groupValue: currentMode,
-            onChanged: (value) {
-              ref.read(themeProvider.notifier).setThemeMode(value!);
-              Navigator.pop(context);
-            },
-          ),
-          RadioListTile<ThemeMode>(
-            title: const Text('暗色模式'),
-            value: ThemeMode.dark,
-            groupValue: currentMode,
-            onChanged: (value) {
-              ref.read(themeProvider.notifier).setThemeMode(value!);
-              Navigator.pop(context);
-            },
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<ThemeMode>(
+                  title: Text('跟随系统'),
+                  value: ThemeMode.system,
+                ),
+                RadioListTile<ThemeMode>(
+                  title: Text('亮色模式'),
+                  value: ThemeMode.light,
+                ),
+                RadioListTile<ThemeMode>(
+                  title: Text('暗色模式'),
+                  value: ThemeMode.dark,
+                ),
+              ],
+            ),
           ),
         ],
       ),

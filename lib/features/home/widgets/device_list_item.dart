@@ -14,11 +14,13 @@ import '../../../shared/utils/format_utils.dart';
 import 'dart:io';
 import '../../../shared/widgets/image_preview_dialog.dart';
 import '../../add_device/add_device_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class DeviceListItem extends ConsumerWidget {
   final Device device;
+  final int index;
 
-  const DeviceListItem({super.key, required this.device});
+  const DeviceListItem({super.key, required this.device, this.index = 0});
 
   IconData _getCategoryIcon(String? categoryName) {
     final item = CategoryConfig.getItem(categoryName);
@@ -29,6 +31,10 @@ class DeviceListItem extends ConsumerWidget {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => AddDeviceScreen(device: device)),
     );
+  }
+
+  void navigateToDetail(BuildContext context) {
+    context.push('/device/${device.id}');
   }
 
   @override
@@ -46,6 +52,8 @@ class DeviceListItem extends ConsumerWidget {
 
     final isSubscription =
         CategoryConfig.getMajorCategory(device.category.value?.name) == '虚拟订阅';
+        
+    final hasBg = device.imagePath != null || device.customIconPath != null;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -79,18 +87,18 @@ class DeviceListItem extends ConsumerWidget {
           ],
         ),
         child: BaseCard(
-          color: theme.colorScheme.surfaceContainerHighest.withAlpha(
-            102,
-          ), // 0.4 * 255
-          onTap: () => navigateToEdit(context),
+          variant: CardVariant.glass,
+          backgroundImagePath: device.imagePath ?? device.customIconPath,
+          onTap: () => navigateToDetail(context),
           child: Row(
             children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: effectiveCategoryColor.withAlpha(25), // 0.1 * 255
+                  color: effectiveCategoryColor.withAlpha(50), // 0.2 * 255 for better visibility on glass
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: effectiveCategoryColor.withAlpha(100), width: 1),
                 ),
                 child: device.customIconPath != null
                     ? GestureDetector(
@@ -99,7 +107,7 @@ class DeviceListItem extends ConsumerWidget {
                           device.customIconPath!,
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(11),
                           child: Image.file(
                             File(device.customIconPath!),
                             width: 48,
@@ -119,11 +127,13 @@ class DeviceListItem extends ConsumerWidget {
                       device.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: hasBg ? Colors.white : theme.colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
                       spacing: 8,
@@ -131,20 +141,47 @@ class DeviceListItem extends ConsumerWidget {
                       children: [
                         Text(
                           '¥${FormatUtils.formatCurrency(isSubscription && device.totalAccumulatedPrice > 0 ? device.totalAccumulatedPrice : device.price)}',
-                          style: theme.textTheme.titleMedium?.copyWith(
+                          style: TextStyle(
+                            fontFamily: 'monospace',
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: const Color(0xFFcf3d69),
+                            fontSize: 16,
+                            color: hasBg ? Colors.white : theme.colorScheme.onSurface,
                           ),
                         ),
                         Text(
                           '¥${FormatUtils.formatCurrency(device.dailyCost)}/天',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: (costColor ?? theme.colorScheme.onSurfaceVariant)
-                                .withValues(alpha: 0.7),
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            color: hasBg ? Colors.white70 : (costColor ?? theme.colorScheme.onSurfaceVariant).withValues(alpha: 0.8),
+                            fontSize: 12,
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 20,
+                      child: device.tags.isNotEmpty
+                          ? Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: device.tags.map((tag) => Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primaryContainer.withAlpha(hasBg ? 100 : 50),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: theme.colorScheme.primary.withAlpha(hasBg ? 200 : 100), width: 0.5),
+                                ),
+                                child: Text(
+                                  '#$tag',
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: hasBg ? Colors.white : theme.colorScheme.primary,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              )).toList(),
+                            )
+                          : null,
                     ),
                   ],
                 ),
@@ -159,7 +196,8 @@ class DeviceListItem extends ConsumerWidget {
                           TextSpan(
                             text: '剩余 ',
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: hasBg ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           TextSpan(
@@ -181,14 +219,16 @@ class DeviceListItem extends ConsumerWidget {
                           TextSpan(
                             text: ' 天',
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: hasBg ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ] else ...[
                           TextSpan(
                             text: '使用 ',
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: hasBg ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                           TextSpan(
@@ -202,7 +242,8 @@ class DeviceListItem extends ConsumerWidget {
                           TextSpan(
                             text: ' 天',
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                              color: hasBg ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -217,7 +258,12 @@ class DeviceListItem extends ConsumerWidget {
           ),
         ),
       ),
-    ).animate().fadeIn().slideX();
+    ).animate().fadeIn(delay: (index * 50).ms).slideX(
+          begin: 0.1,
+          delay: (index * 50).ms,
+          duration: 300.ms,
+          curve: Curves.easeOutQuad,
+        );
   }
 
   void _showDeleteDialog(BuildContext context, WidgetRef ref) {

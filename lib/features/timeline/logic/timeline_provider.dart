@@ -4,11 +4,13 @@ import '../../../data/repositories/device_repository.dart';
 import '../models/timeline_event.dart';
 import '../../../shared/config/category_config.dart';
 
-final timelineFilterProvider = StateProvider<Set<String>>((ref) => CategoryConfig.hierarchy.keys.toSet());
+final timelineFilterProvider = StateProvider<Set<String>>((ref) => {});
+final timelineTagFilterProvider = StateProvider<Set<String>>((ref) => {});
 
 final timelineEventsProvider = StreamProvider<List<YearlyTimeline>>((ref) {
   final repository = ref.watch(deviceRepositoryProvider);
   final filterCategory = ref.watch(timelineFilterProvider);
+  final filterTags = ref.watch(timelineTagFilterProvider);
   
   return repository.watchAllDevices().map((devices) {
     List<TimelineEvent> allEvents = [];
@@ -26,6 +28,7 @@ final timelineEventsProvider = StreamProvider<List<YearlyTimeline>>((ref) {
         type: TimelineEventType.purchase,
         cost: device.price,
         note: 'Purchased',
+        tags: device.tags,
       ));
 
       // 2. Renewal History
@@ -43,6 +46,7 @@ final timelineEventsProvider = StreamProvider<List<YearlyTimeline>>((ref) {
           type: TimelineEventType.renewal,
           cost: history.price,
           note: history.note ?? 'Renewed',
+          tags: device.tags,
         ));
       }
     }
@@ -52,6 +56,13 @@ final timelineEventsProvider = StreamProvider<List<YearlyTimeline>>((ref) {
       allEvents = allEvents.where((e) {
         final major = CategoryConfig.getMajorCategory(e.categoryName);
         return filterCategory.contains(major);
+      }).toList();
+    }
+
+    // Filter by Tags
+    if (filterTags.isNotEmpty) {
+      allEvents = allEvents.where((e) {
+        return filterTags.every((tag) => e.tags.contains(tag));
       }).toList();
     }
 

@@ -43,84 +43,114 @@ const DeviceSchema = CollectionSchema(
       name: r'daysUsed',
       type: IsarType.long,
     ),
-    r'firstPeriodPrice': PropertySchema(
+    r'expectedLifeYears': PropertySchema(
       id: 5,
+      name: r'expectedLifeYears',
+      type: IsarType.double,
+    ),
+    r'firstPeriodPrice': PropertySchema(
+      id: 6,
       name: r'firstPeriodPrice',
       type: IsarType.double,
     ),
     r'hasReminder': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'hasReminder',
       type: IsarType.bool,
     ),
     r'history': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'history',
       type: IsarType.objectList,
       target: r'SubscriptionHistory',
     ),
+    r'imagePath': PropertySchema(
+      id: 9,
+      name: r'imagePath',
+      type: IsarType.string,
+    ),
     r'isAutoRenew': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'isAutoRenew',
       type: IsarType.bool,
     ),
+    r'lastUsedDate': PropertySchema(
+      id: 11,
+      name: r'lastUsedDate',
+      type: IsarType.dateTime,
+    ),
     r'name': PropertySchema(
-      id: 9,
+      id: 12,
       name: r'name',
       type: IsarType.string,
     ),
     r'nextBillingDate': PropertySchema(
-      id: 10,
+      id: 13,
       name: r'nextBillingDate',
       type: IsarType.dateTime,
     ),
+    r'notes': PropertySchema(
+      id: 14,
+      name: r'notes',
+      type: IsarType.string,
+    ),
     r'periodPrice': PropertySchema(
-      id: 11,
+      id: 15,
       name: r'periodPrice',
       type: IsarType.double,
     ),
     r'platform': PropertySchema(
-      id: 12,
+      id: 16,
       name: r'platform',
       type: IsarType.string,
     ),
     r'price': PropertySchema(
-      id: 13,
+      id: 17,
       name: r'price',
       type: IsarType.double,
     ),
     r'purchaseDate': PropertySchema(
-      id: 14,
+      id: 18,
       name: r'purchaseDate',
       type: IsarType.dateTime,
     ),
     r'reminderDays': PropertySchema(
-      id: 15,
+      id: 19,
       name: r'reminderDays',
       type: IsarType.long,
     ),
     r'scrapDate': PropertySchema(
-      id: 16,
+      id: 20,
       name: r'scrapDate',
       type: IsarType.dateTime,
     ),
     r'status': PropertySchema(
-      id: 17,
+      id: 21,
       name: r'status',
       type: IsarType.string,
     ),
+    r'tags': PropertySchema(
+      id: 22,
+      name: r'tags',
+      type: IsarType.stringList,
+    ),
     r'totalAccumulatedPrice': PropertySchema(
-      id: 18,
+      id: 23,
       name: r'totalAccumulatedPrice',
       type: IsarType.double,
     ),
+    r'usageCount': PropertySchema(
+      id: 24,
+      name: r'usageCount',
+      type: IsarType.long,
+    ),
     r'uuid': PropertySchema(
-      id: 19,
+      id: 25,
       name: r'uuid',
       type: IsarType.string,
     ),
     r'warrantyEndDate': PropertySchema(
-      id: 20,
+      id: 26,
       name: r'warrantyEndDate',
       type: IsarType.dateTime,
     )
@@ -173,7 +203,19 @@ int _deviceEstimateSize(
           SubscriptionHistorySchema.estimateSize(value, offsets, allOffsets);
     }
   }
+  {
+    final value = object.imagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.notes;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.platform;
     if (value != null) {
@@ -181,6 +223,13 @@ int _deviceEstimateSize(
     }
   }
   bytesCount += 3 + object.status.length * 3;
+  bytesCount += 3 + object.tags.length * 3;
+  {
+    for (var i = 0; i < object.tags.length; i++) {
+      final value = object.tags[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.uuid.length * 3;
   return bytesCount;
 }
@@ -196,27 +245,33 @@ void _deviceSerialize(
   writer.writeString(offsets[2], object.cycleType?.name);
   writer.writeDouble(offsets[3], object.dailyCost);
   writer.writeLong(offsets[4], object.daysUsed);
-  writer.writeDouble(offsets[5], object.firstPeriodPrice);
-  writer.writeBool(offsets[6], object.hasReminder);
+  writer.writeDouble(offsets[5], object.expectedLifeYears);
+  writer.writeDouble(offsets[6], object.firstPeriodPrice);
+  writer.writeBool(offsets[7], object.hasReminder);
   writer.writeObjectList<SubscriptionHistory>(
-    offsets[7],
+    offsets[8],
     allOffsets,
     SubscriptionHistorySchema.serialize,
     object.history,
   );
-  writer.writeBool(offsets[8], object.isAutoRenew);
-  writer.writeString(offsets[9], object.name);
-  writer.writeDateTime(offsets[10], object.nextBillingDate);
-  writer.writeDouble(offsets[11], object.periodPrice);
-  writer.writeString(offsets[12], object.platform);
-  writer.writeDouble(offsets[13], object.price);
-  writer.writeDateTime(offsets[14], object.purchaseDate);
-  writer.writeLong(offsets[15], object.reminderDays);
-  writer.writeDateTime(offsets[16], object.scrapDate);
-  writer.writeString(offsets[17], object.status);
-  writer.writeDouble(offsets[18], object.totalAccumulatedPrice);
-  writer.writeString(offsets[19], object.uuid);
-  writer.writeDateTime(offsets[20], object.warrantyEndDate);
+  writer.writeString(offsets[9], object.imagePath);
+  writer.writeBool(offsets[10], object.isAutoRenew);
+  writer.writeDateTime(offsets[11], object.lastUsedDate);
+  writer.writeString(offsets[12], object.name);
+  writer.writeDateTime(offsets[13], object.nextBillingDate);
+  writer.writeString(offsets[14], object.notes);
+  writer.writeDouble(offsets[15], object.periodPrice);
+  writer.writeString(offsets[16], object.platform);
+  writer.writeDouble(offsets[17], object.price);
+  writer.writeDateTime(offsets[18], object.purchaseDate);
+  writer.writeLong(offsets[19], object.reminderDays);
+  writer.writeDateTime(offsets[20], object.scrapDate);
+  writer.writeString(offsets[21], object.status);
+  writer.writeStringList(offsets[22], object.tags);
+  writer.writeDouble(offsets[23], object.totalAccumulatedPrice);
+  writer.writeLong(offsets[24], object.usageCount);
+  writer.writeString(offsets[25], object.uuid);
+  writer.writeDateTime(offsets[26], object.warrantyEndDate);
 }
 
 Device _deviceDeserialize(
@@ -230,28 +285,34 @@ Device _deviceDeserialize(
   object.customIconPath = reader.readStringOrNull(offsets[1]);
   object.cycleType =
       _DevicecycleTypeValueEnumMap[reader.readStringOrNull(offsets[2])];
-  object.firstPeriodPrice = reader.readDoubleOrNull(offsets[5]);
-  object.hasReminder = reader.readBool(offsets[6]);
+  object.expectedLifeYears = reader.readDoubleOrNull(offsets[5]);
+  object.firstPeriodPrice = reader.readDoubleOrNull(offsets[6]);
+  object.hasReminder = reader.readBool(offsets[7]);
   object.history = reader.readObjectList<SubscriptionHistory>(
-        offsets[7],
+        offsets[8],
         SubscriptionHistorySchema.deserialize,
         allOffsets,
         SubscriptionHistory(),
       ) ??
       [];
   object.id = id;
-  object.isAutoRenew = reader.readBool(offsets[8]);
-  object.name = reader.readString(offsets[9]);
-  object.nextBillingDate = reader.readDateTimeOrNull(offsets[10]);
-  object.periodPrice = reader.readDoubleOrNull(offsets[11]);
-  object.platform = reader.readStringOrNull(offsets[12]);
-  object.price = reader.readDouble(offsets[13]);
-  object.purchaseDate = reader.readDateTime(offsets[14]);
-  object.reminderDays = reader.readLong(offsets[15]);
-  object.scrapDate = reader.readDateTimeOrNull(offsets[16]);
-  object.totalAccumulatedPrice = reader.readDouble(offsets[18]);
-  object.uuid = reader.readString(offsets[19]);
-  object.warrantyEndDate = reader.readDateTimeOrNull(offsets[20]);
+  object.imagePath = reader.readStringOrNull(offsets[9]);
+  object.isAutoRenew = reader.readBool(offsets[10]);
+  object.lastUsedDate = reader.readDateTimeOrNull(offsets[11]);
+  object.name = reader.readString(offsets[12]);
+  object.nextBillingDate = reader.readDateTimeOrNull(offsets[13]);
+  object.notes = reader.readStringOrNull(offsets[14]);
+  object.periodPrice = reader.readDoubleOrNull(offsets[15]);
+  object.platform = reader.readStringOrNull(offsets[16]);
+  object.price = reader.readDouble(offsets[17]);
+  object.purchaseDate = reader.readDateTime(offsets[18]);
+  object.reminderDays = reader.readLong(offsets[19]);
+  object.scrapDate = reader.readDateTimeOrNull(offsets[20]);
+  object.tags = reader.readStringList(offsets[22]) ?? [];
+  object.totalAccumulatedPrice = reader.readDouble(offsets[23]);
+  object.usageCount = reader.readLong(offsets[24]);
+  object.uuid = reader.readString(offsets[25]);
+  object.warrantyEndDate = reader.readDateTimeOrNull(offsets[26]);
   return object;
 }
 
@@ -276,8 +337,10 @@ P _deviceDeserializeProp<P>(
     case 5:
       return (reader.readDoubleOrNull(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 7:
+      return (reader.readBool(offset)) as P;
+    case 8:
       return (reader.readObjectList<SubscriptionHistory>(
             offset,
             SubscriptionHistorySchema.deserialize,
@@ -285,31 +348,41 @@ P _deviceDeserializeProp<P>(
             SubscriptionHistory(),
           ) ??
           []) as P;
-    case 8:
-      return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
-    case 10:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 11:
-      return (reader.readDoubleOrNull(offset)) as P;
-    case 12:
       return (reader.readStringOrNull(offset)) as P;
-    case 13:
-      return (reader.readDouble(offset)) as P;
-    case 14:
-      return (reader.readDateTime(offset)) as P;
-    case 15:
-      return (reader.readLong(offset)) as P;
-    case 16:
+    case 10:
+      return (reader.readBool(offset)) as P;
+    case 11:
       return (reader.readDateTimeOrNull(offset)) as P;
+    case 12:
+      return (reader.readString(offset)) as P;
+    case 13:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 14:
+      return (reader.readStringOrNull(offset)) as P;
+    case 15:
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 16:
+      return (reader.readStringOrNull(offset)) as P;
     case 17:
-      return (reader.readString(offset)) as P;
-    case 18:
       return (reader.readDouble(offset)) as P;
+    case 18:
+      return (reader.readDateTime(offset)) as P;
     case 19:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 20:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 21:
+      return (reader.readString(offset)) as P;
+    case 22:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 23:
+      return (reader.readDouble(offset)) as P;
+    case 24:
+      return (reader.readLong(offset)) as P;
+    case 25:
+      return (reader.readString(offset)) as P;
+    case 26:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -900,6 +973,87 @@ extension DeviceQueryFilter on QueryBuilder<Device, Device, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterFilterCondition>
+      expectedLifeYearsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'expectedLifeYears',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition>
+      expectedLifeYearsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'expectedLifeYears',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> expectedLifeYearsEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'expectedLifeYears',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition>
+      expectedLifeYearsGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'expectedLifeYears',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> expectedLifeYearsLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'expectedLifeYears',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> expectedLifeYearsBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'expectedLifeYears',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterFilterCondition> firstPeriodPriceIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1126,12 +1280,227 @@ extension DeviceQueryFilter on QueryBuilder<Device, Device, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'imagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'imagePath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'imagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'imagePath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> imagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'imagePath',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterFilterCondition> isAutoRenewEqualTo(
       bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isAutoRenew',
         value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> lastUsedDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastUsedDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> lastUsedDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastUsedDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> lastUsedDateEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastUsedDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> lastUsedDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastUsedDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> lastUsedDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastUsedDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> lastUsedDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastUsedDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1332,6 +1701,152 @@ extension DeviceQueryFilter on QueryBuilder<Device, Device, QFilterCondition> {
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'notes',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'notes',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> notesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'notes',
+        value: '',
       ));
     });
   }
@@ -1927,6 +2442,220 @@ extension DeviceQueryFilter on QueryBuilder<Device, Device, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'tags',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'tags',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'tags',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'tags',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'tags',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> tagsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'tags',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterFilterCondition>
       totalAccumulatedPriceEqualTo(
     double value, {
@@ -1989,6 +2718,59 @@ extension DeviceQueryFilter on QueryBuilder<Device, Device, QFilterCondition> {
         upper: upper,
         includeUpper: includeUpper,
         epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> usageCountEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'usageCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> usageCountGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'usageCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> usageCountLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'usageCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterFilterCondition> usageCountBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'usageCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -2279,6 +3061,18 @@ extension DeviceQuerySortBy on QueryBuilder<Device, Device, QSortBy> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterSortBy> sortByExpectedLifeYears() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'expectedLifeYears', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> sortByExpectedLifeYearsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'expectedLifeYears', Sort.desc);
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterSortBy> sortByFirstPeriodPrice() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'firstPeriodPrice', Sort.asc);
@@ -2303,6 +3097,18 @@ extension DeviceQuerySortBy on QueryBuilder<Device, Device, QSortBy> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterSortBy> sortByImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> sortByImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterSortBy> sortByIsAutoRenew() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isAutoRenew', Sort.asc);
@@ -2312,6 +3118,18 @@ extension DeviceQuerySortBy on QueryBuilder<Device, Device, QSortBy> {
   QueryBuilder<Device, Device, QAfterSortBy> sortByIsAutoRenewDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isAutoRenew', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> sortByLastUsedDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastUsedDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> sortByLastUsedDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastUsedDate', Sort.desc);
     });
   }
 
@@ -2336,6 +3154,18 @@ extension DeviceQuerySortBy on QueryBuilder<Device, Device, QSortBy> {
   QueryBuilder<Device, Device, QAfterSortBy> sortByNextBillingDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nextBillingDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> sortByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> sortByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
     });
   }
 
@@ -2435,6 +3265,18 @@ extension DeviceQuerySortBy on QueryBuilder<Device, Device, QSortBy> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterSortBy> sortByUsageCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'usageCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> sortByUsageCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'usageCount', Sort.desc);
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterSortBy> sortByUuid() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'uuid', Sort.asc);
@@ -2521,6 +3363,18 @@ extension DeviceQuerySortThenBy on QueryBuilder<Device, Device, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterSortBy> thenByExpectedLifeYears() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'expectedLifeYears', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> thenByExpectedLifeYearsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'expectedLifeYears', Sort.desc);
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterSortBy> thenByFirstPeriodPrice() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'firstPeriodPrice', Sort.asc);
@@ -2557,6 +3411,18 @@ extension DeviceQuerySortThenBy on QueryBuilder<Device, Device, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterSortBy> thenByImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> thenByImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'imagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterSortBy> thenByIsAutoRenew() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isAutoRenew', Sort.asc);
@@ -2566,6 +3432,18 @@ extension DeviceQuerySortThenBy on QueryBuilder<Device, Device, QSortThenBy> {
   QueryBuilder<Device, Device, QAfterSortBy> thenByIsAutoRenewDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isAutoRenew', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> thenByLastUsedDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastUsedDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> thenByLastUsedDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastUsedDate', Sort.desc);
     });
   }
 
@@ -2590,6 +3468,18 @@ extension DeviceQuerySortThenBy on QueryBuilder<Device, Device, QSortThenBy> {
   QueryBuilder<Device, Device, QAfterSortBy> thenByNextBillingDateDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nextBillingDate', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> thenByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> thenByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
     });
   }
 
@@ -2689,6 +3579,18 @@ extension DeviceQuerySortThenBy on QueryBuilder<Device, Device, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Device, Device, QAfterSortBy> thenByUsageCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'usageCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Device, Device, QAfterSortBy> thenByUsageCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'usageCount', Sort.desc);
+    });
+  }
+
   QueryBuilder<Device, Device, QAfterSortBy> thenByUuid() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'uuid', Sort.asc);
@@ -2748,6 +3650,12 @@ extension DeviceQueryWhereDistinct on QueryBuilder<Device, Device, QDistinct> {
     });
   }
 
+  QueryBuilder<Device, Device, QDistinct> distinctByExpectedLifeYears() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'expectedLifeYears');
+    });
+  }
+
   QueryBuilder<Device, Device, QDistinct> distinctByFirstPeriodPrice() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'firstPeriodPrice');
@@ -2760,9 +3668,22 @@ extension DeviceQueryWhereDistinct on QueryBuilder<Device, Device, QDistinct> {
     });
   }
 
+  QueryBuilder<Device, Device, QDistinct> distinctByImagePath(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'imagePath', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Device, Device, QDistinct> distinctByIsAutoRenew() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'isAutoRenew');
+    });
+  }
+
+  QueryBuilder<Device, Device, QDistinct> distinctByLastUsedDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastUsedDate');
     });
   }
 
@@ -2776,6 +3697,13 @@ extension DeviceQueryWhereDistinct on QueryBuilder<Device, Device, QDistinct> {
   QueryBuilder<Device, Device, QDistinct> distinctByNextBillingDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'nextBillingDate');
+    });
+  }
+
+  QueryBuilder<Device, Device, QDistinct> distinctByNotes(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
     });
   }
 
@@ -2823,9 +3751,21 @@ extension DeviceQueryWhereDistinct on QueryBuilder<Device, Device, QDistinct> {
     });
   }
 
+  QueryBuilder<Device, Device, QDistinct> distinctByTags() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'tags');
+    });
+  }
+
   QueryBuilder<Device, Device, QDistinct> distinctByTotalAccumulatedPrice() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'totalAccumulatedPrice');
+    });
+  }
+
+  QueryBuilder<Device, Device, QDistinct> distinctByUsageCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'usageCount');
     });
   }
 
@@ -2880,6 +3820,12 @@ extension DeviceQueryProperty on QueryBuilder<Device, Device, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Device, double?, QQueryOperations> expectedLifeYearsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'expectedLifeYears');
+    });
+  }
+
   QueryBuilder<Device, double?, QQueryOperations> firstPeriodPriceProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'firstPeriodPrice');
@@ -2899,9 +3845,21 @@ extension DeviceQueryProperty on QueryBuilder<Device, Device, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Device, String?, QQueryOperations> imagePathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'imagePath');
+    });
+  }
+
   QueryBuilder<Device, bool, QQueryOperations> isAutoRenewProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isAutoRenew');
+    });
+  }
+
+  QueryBuilder<Device, DateTime?, QQueryOperations> lastUsedDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastUsedDate');
     });
   }
 
@@ -2914,6 +3872,12 @@ extension DeviceQueryProperty on QueryBuilder<Device, Device, QQueryProperty> {
   QueryBuilder<Device, DateTime?, QQueryOperations> nextBillingDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'nextBillingDate');
+    });
+  }
+
+  QueryBuilder<Device, String?, QQueryOperations> notesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'notes');
     });
   }
 
@@ -2959,10 +3923,22 @@ extension DeviceQueryProperty on QueryBuilder<Device, Device, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Device, List<String>, QQueryOperations> tagsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'tags');
+    });
+  }
+
   QueryBuilder<Device, double, QQueryOperations>
       totalAccumulatedPriceProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'totalAccumulatedPrice');
+    });
+  }
+
+  QueryBuilder<Device, int, QQueryOperations> usageCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'usageCount');
     });
   }
 

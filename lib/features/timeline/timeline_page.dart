@@ -1,19 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'logic/timeline_provider.dart';
 import 'models/timeline_event.dart';
 import 'widgets/timeline_node.dart';
 import '../../shared/utils/format_utils.dart';
 import '../home/widgets/multi_select_filter_delegate.dart';
+import '../home/home_screen.dart'; // for deviceListProvider
+
+/// Embeddable content for use inside TabBarView (no Scaffold/AppBar)
+class TimelineContent extends ConsumerStatefulWidget {
+  const TimelineContent({super.key});
+
+  @override
+  ConsumerState<TimelineContent> createState() => _TimelineContentState();
+}
+
+class _TimelineContentState extends ConsumerState<TimelineContent>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return _buildTimelineBody(context, ref, embedded: true);
+  }
+}
 
 class TimelinePage extends ConsumerWidget {
   const TimelinePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: _buildTimelineBody(context, ref, embedded: false),
+    );
+  }
+}
+
+Widget _buildTimelineBody(BuildContext context, WidgetRef ref, {required bool embedded}) {
     final timelineAsync = ref.watch(timelineEventsProvider);
     final selectedFilter = ref.watch(timelineFilterProvider);
+    final selectedTags = ref.watch(timelineTagFilterProvider);
+    final devicesAsync = ref.watch(deviceListProvider);
     final theme = Theme.of(context);
 
     // Color definitions for lines
@@ -21,9 +50,9 @@ class TimelinePage extends ConsumerWidget {
     final monthLineColor = theme.colorScheme.secondary.withValues(alpha: 0.5);
     final dayLineColor = theme.colorScheme.tertiary.withValues(alpha: 0.3);
 
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
+    return CustomScrollView(
+      slivers: [
+        if (!embedded) ...[
           SliverAppBar(
             pinned: true,
             leading: const BackButton(),
@@ -36,6 +65,7 @@ class TimelinePage extends ConsumerWidget {
             backgroundColor: theme.scaffoldBackgroundColor,
             surfaceTintColor: theme.scaffoldBackgroundColor,
           ),
+        ],
           
           SliverPersistentHeader(
             pinned: true,
@@ -47,14 +77,50 @@ class TimelinePage extends ConsumerWidget {
             ),
           ),
           
+          if (devicesAsync.valueOrNull != null && devicesAsync.valueOrNull!.any((d) => d.tags.isNotEmpty))
+            SliverToBoxAdapter(
+              child: Container(
+                height: 48,
+                color: theme.scaffoldBackgroundColor,
+                alignment: Alignment.centerLeft,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    for (final tag in (devicesAsync.valueOrNull!.expand((d) => d.tags).toSet().toList()..sort()))
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+                        child: FilterChip(
+                          label: Text('#$tag'),
+                          labelStyle: TextStyle(
+                            fontSize: 12,
+                            fontWeight: selectedTags.contains(tag) ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          selected: selectedTags.contains(tag),
+                          onSelected: (selected) {
+                            final newTags = Set<String>.from(selectedTags);
+                            if (selected) {
+                              newTags.add(tag);
+                            } else {
+                              newTags.remove(tag);
+                            }
+                            ref.read(timelineTagFilterProvider.notifier).state = newTags;
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          
           timelineAsync.when(
             data: (timelineYears) {
               if (timelineYears.isEmpty) {
-                 return SliverFillRemaining(
+                 return const SliverFillRemaining(
                    child: Center(
                      child: Text(
                        '暂无记录',
-                       style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.outline),
+                       style: TextStyle(color: Colors.grey),
                      ),
                    ),
                  );
@@ -64,113 +130,77 @@ class TimelinePage extends ConsumerWidget {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final yearData = timelineYears[index];
-                    final isLastYear = index == timelineYears.length - 1;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border(left: BorderSide(color: yearLineColor, width: 1)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Year Header
+                            _buildYearHeader(context, yearData.year, yearData.totalCost),
+                            
+                            // Months
+                            ...yearData.months.map((monthData) {
+                               // Pre-group day events
+                               final eventsByDay = <int, List<TimelineEvent>>{};
+                               for (var e in monthData.events) {
+                                 eventsByDay.putIfAbsent(e.date.day, () => []).add(e);
+                               }
+                               final sortedDays = eventsByDay.keys.toList()..sort((a, b) => b.compareTo(a));
 
-                    return IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Level 1: Year Line
-                          _buildLine(
-                            context, 
-                            color: yearLineColor, 
-                            isLast: isLastYear, 
-                            width: 20
-                          ),
-                          
-                          // Year Content
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Year Header
-                                _buildYearHeader(context, yearData.year, yearData.totalCost),
-                                
-                                // Months
-                                ...yearData.months.map((monthData) {
-                                   final isLastMonth = monthData == yearData.months.last;
-                                   
-                                   return IntrinsicHeight(
-                                     child: Row(
-                                       crossAxisAlignment: CrossAxisAlignment.start,
-                                       children: [
-                                          // Level 2: Month Line
-                                          _buildLine(
-                                            context,
-                                            color: monthLineColor,
-                                            isLast: isLastMonth,
-                                            width: 20,
-                                          ),
-                                          
-                                          // Month Content
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                // Month Header
-                                                _buildMonthHeader(context, monthData),
-                                                
-                                                // Days
-                                                ...() {
-                                                  // Group by Day (Duplicated logic from previous, consider moving to provider if complex)
-                                                  final eventsByDay = <int, List<TimelineEvent>>{};
-                                                  for (var e in monthData.events) {
-                                                    eventsByDay.putIfAbsent(e.date.day, () => []).add(e);
-                                                  }
-                                                  final sortedDays = eventsByDay.keys.toList()..sort((a, b) => b.compareTo(a));
-                                                  
-                                                  return sortedDays.map((day) {
-                                                    final dayEvents = eventsByDay[day]!;
-                                                    final dayTotal = dayEvents.fold(0.0, (sum, e) => sum + e.cost);
-                                                    final isLastDay = day == sortedDays.last;
+                               return Padding(
+                                 padding: const EdgeInsets.only(left: 10),
+                                 child: Container(
+                                   decoration: BoxDecoration(
+                                     border: Border(left: BorderSide(color: monthLineColor, width: 1)),
+                                   ),
+                                   child: Column(
+                                     crossAxisAlignment: CrossAxisAlignment.start,
+                                     children: [
+                                       // Month Header
+                                       _buildMonthHeader(context, monthData),
+                                       
+                                       // Days
+                                       ...sortedDays.map((day) {
+                                         final dayEvents = eventsByDay[day]!;
+                                         final dayTotal = dayEvents.fold(0.0, (sum, e) => sum + e.cost);
 
-                                                    return IntrinsicHeight(
-                                                      child: Row(
-                                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                                        children: [
-                                                          // Level 3: Day Line
-                                                          _buildLine(
-                                                            context,
-                                                            color: dayLineColor,
-                                                            isLast: isLastDay,
-                                                            width: 20
-                                                          ),
-                                                          
-                                                          // Day Content (Nodes)
-                                                          Expanded(
-                                                            child: Column(
-                                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                                              children: [
-                                                                _buildDayHeader(context, monthData.month, day, dayTotal),
-                                                                
-                                                                ...dayEvents.map((event) => TimelineNode(event: event)),
-                                                                
-                                                                const SizedBox(height: 12),
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  });
-                                                }(),
-                                                
-                                                const SizedBox(height: 8),
-                                              ],
-                                            ),
-                                          ),
-                                       ],
-                                     ),
-                                   );
-                                }),
-                                
-                                const SizedBox(height: 16),
-                              ],
-                            ),
-                          ),
-                        ],
+                                         return Padding(
+                                           padding: const EdgeInsets.only(left: 10),
+                                           child: Container(
+                                             decoration: BoxDecoration(
+                                               border: Border(left: BorderSide(color: dayLineColor, width: 1)),
+                                             ),
+                                             child: Column(
+                                               crossAxisAlignment: CrossAxisAlignment.start,
+                                               children: [
+                                                 _buildDayHeader(context, monthData.month, day, dayTotal),
+                                                 
+                                                 ...dayEvents.map((event) => TimelineNode(event: event)),
+                                                 
+                                                 const SizedBox(height: 12),
+                                               ],
+                                             ),
+                                           ),
+                                         );
+                                       }),
+                                       
+                                       const SizedBox(height: 8),
+                                     ],
+                                   ),
+                                 ),
+                               );
+                            }),
+                            
+                            const SizedBox(height: 16),
+                          ],
+                        ),
                       ),
-                    ).animate().fadeIn(duration: 400.ms, delay: (50 * index).ms);
+                    );
                   },
                   childCount: timelineYears.length,
                 ),
@@ -184,69 +214,22 @@ class TimelinePage extends ConsumerWidget {
             ),
           ),
           
-          const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
-        ],
-      ),
+      ],
     );
-  }
+}
 
-  // Helper to build a vertical line column
-  Widget _buildLine(BuildContext context, {required Color color, required bool isLast, double width = 16}) {
-    return SizedBox(
-      width: width,
-      child: Stack(
-         alignment: Alignment.topCenter,
-         children: [
-           // The continuous line
-           // If isLast is true, we might want to stop the line at some point?
-           // For simple continuous look, year lines usually connect.
-           // User request: "Year and Year connect". So do NOT hide line if isLastYear?
-           // Actually, if it's strictly hierarchical, the last year shouldn't have a line trailing into nothingness.
-           // But timeline implies continuity.
-           // Let's keep it simple: Line always exists unless it clearly ends the list.
-           
-           if (!isLast) 
-             Positioned(
-               top: 0, 
-               bottom: 0, 
-               child: Container(width: 1, color: color),
-             ),
-             
-           // But we need the line to at least reach the current item's "dot".
-           // Since we use rows, we can just let 'Expanded' children dictact height.
-           // If isLast, we still want the line to go from top to the "Header" position and maybe stop?
-           // Let's implement a full height line for now, except for the very last item of the entire list.
-           // However, inside IntrinsicHeight, Expanded/Positioned works well.
-           
-           if (isLast)
-             // Last item line: only goes halfway? 
-             // Or just full height but transparent at bottom? 
-             // Let's Draw a line that fits the content.
-             Positioned(
-               top: 0,
-               bottom: 0, // Fill ensures it connects to children
-               child: Container(width: 1, color: color),
-             ),
-
-            // We can add a "Dot" or "Branch" indicator at the top if we want tree style.
-            // For now, simple lines.
-         ],
-      ),
-    );
-  }
-
-  Widget _buildYearHeader(BuildContext context, int year, double totalCost) {
+Widget _buildYearHeader(BuildContext context, int year, double totalCost) {
      final theme = Theme.of(context);
      return Padding(
-       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8), // Reduced vertical
+       padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8), 
        child: Row(
          children: [
            Container(
              width: 8, height: 8, 
              decoration: BoxDecoration(shape: BoxShape.circle, color: theme.colorScheme.primary),
            ),
-           const SizedBox(width: 8), // Reduced gap
-           Text('$year', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)), // Reduced size
+           const SizedBox(width: 8), 
+           Text('$year', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)), 
            const SizedBox(width: 4),
            Text('年', style: theme.textTheme.titleSmall),
            const Spacer(),
@@ -257,12 +240,12 @@ class TimelinePage extends ConsumerWidget {
          ],
        ),
      );
-  }
+}
 
-  Widget _buildMonthHeader(BuildContext context, MonthlyTimeline monthData) {
+Widget _buildMonthHeader(BuildContext context, MonthlyTimeline monthData) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4), // Reduced vertical
+      padding: const EdgeInsets.symmetric(vertical: 4), 
       child: Row(
         children: [
           Container(
@@ -279,9 +262,9 @@ class TimelinePage extends ConsumerWidget {
         ],
       ),
     );
-  }
+}
 
-  Widget _buildDayHeader(BuildContext context, int month, int day, double totalCost) {
+Widget _buildDayHeader(BuildContext context, int month, int day, double totalCost) {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 8),
@@ -292,7 +275,7 @@ class TimelinePage extends ConsumerWidget {
              decoration: BoxDecoration(shape: BoxShape.circle, color: theme.colorScheme.tertiary),
            ),
            const SizedBox(width: 12),
-           Text('${month}月${day}日', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.tertiary)),
+           Text('$month月$day日', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.tertiary)),
            const Spacer(),
            Padding(
              padding: const EdgeInsets.only(right: 16.0),
@@ -301,5 +284,4 @@ class TimelinePage extends ConsumerWidget {
         ],
       ),
     );
-  }
 }

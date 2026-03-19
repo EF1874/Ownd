@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'scaffold_with_navbar.dart';
-// Placeholder imports for screens
 import '../../features/home/home_screen.dart';
 import '../../features/add_device/add_device_screen.dart';
 import '../../features/profile/profile_screen.dart';
-import '../../features/timeline/timeline_page.dart';
+import '../../features/dashboard/insights_screen.dart';
+import '../../features/device_detail/device_detail_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -27,8 +27,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const HomeScreen(),
           ),
           GoRoute(
-            path: '/timeline',
-            builder: (context, state) => const TimelinePage(),
+            path: '/insights',
+            builder: (context, state) => const InsightsScreen(),
           ),
           GoRoute(
             path: '/profile',
@@ -40,6 +40,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/add',
         parentNavigatorKey: _rootNavigatorKey, 
         builder: (context, state) => const AddDeviceScreen(),
+      ),
+      GoRoute(
+        path: '/device/:id',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final idStr = state.pathParameters['id'];
+          final id = int.tryParse(idStr ?? '') ?? 0;
+          return DeviceDetailScreen(id: id);
+        },
       ),
     ],
   );

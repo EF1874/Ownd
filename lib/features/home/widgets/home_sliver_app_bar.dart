@@ -48,30 +48,37 @@ class HomeSliverAppBar extends ConsumerWidget {
       title: Row(
         children: [
           const Spacer(),
-          // Timeline icon removed as it is now in bottom bar
+          IconButton(
+            icon: Icon(_getThemeIcon(ref.watch(themeProvider))),
+            tooltip: '切换主题',
+            onPressed: () {
+              final currentMode = ref.read(themeProvider);
+              ThemeMode nextMode;
+              switch (currentMode) {
+                case ThemeMode.system:
+                  nextMode = ThemeMode.light;
+                  break;
+                case ThemeMode.light:
+                  nextMode = ThemeMode.dark;
+                  break;
+                case ThemeMode.dark:
+                  nextMode = ThemeMode.system;
+                  break;
+              }
+              ref.read(themeProvider.notifier).setThemeMode(nextMode);
+            },
+          ),
           IconButton(
             icon: Icon(isGridView ? Icons.view_list : Icons.grid_view),
             tooltip: isGridView ? '列表视图' : '网格视图',
             onPressed: () => onGridViewChanged(!isGridView),
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.menu),
+            icon: const Icon(Icons.tune_rounded), // Changed to tune icon as it's more for filters/sort
             itemBuilder: (context) {
               const double itemHeight = 36.0;
               final textStyle = Theme.of(context).textTheme.bodyMedium;
               return [
-                PopupMenuItem(
-                  value: 'theme',
-                  height: itemHeight,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.brightness_6, size: 18),
-                      const SizedBox(width: 8),
-                      Text('切换主题', style: textStyle),
-                    ],
-                  ),
-                ),
-                const PopupMenuDivider(height: 1),
                 PopupMenuItem(
                   value: 'toggle_expiring',
                   height: itemHeight,
@@ -115,7 +122,6 @@ class HomeSliverAppBar extends ConsumerWidget {
                   ),
                 ),
                 const PopupMenuDivider(height: 1),
-                // Sort Fields
                 // Sort Fields
                 PopupMenuItem(
                   value: 'field_date',
@@ -207,9 +213,7 @@ class HomeSliverAppBar extends ConsumerWidget {
               ];
             },
             onSelected: (v) {
-              if (v == 'theme') {
-                _showThemeDialog(context, ref);
-              } else if (v == 'toggle_expiring') {
+              if (v == 'toggle_expiring') {
                 onShowExpiringChanged(!showExpiringList);
               } else if (v == 'platform_filter') {
                 _showPlatformFilterDialog(context);
@@ -239,43 +243,15 @@ class HomeSliverAppBar extends ConsumerWidget {
     );
   }
 
-  void _showThemeDialog(BuildContext context, WidgetRef ref) {
-    final currentMode = ref.read(themeProvider);
-    showDialog(
-      context: context,
-      builder: (context) => SimpleDialog(
-        title: const Text('选择主题'),
-        children: [
-          RadioListTile<ThemeMode>(
-            title: const Text('跟随系统'),
-            value: ThemeMode.system,
-            groupValue: currentMode,
-            onChanged: (value) {
-              ref.read(themeProvider.notifier).setThemeMode(value!);
-              Navigator.pop(context);
-            },
-          ),
-          RadioListTile<ThemeMode>(
-            title: const Text('亮色模式'),
-            value: ThemeMode.light,
-            groupValue: currentMode,
-            onChanged: (value) {
-              ref.read(themeProvider.notifier).setThemeMode(value!);
-              Navigator.pop(context);
-            },
-          ),
-          RadioListTile<ThemeMode>(
-            title: const Text('暗色模式'),
-            value: ThemeMode.dark,
-            groupValue: currentMode,
-            onChanged: (value) {
-              ref.read(themeProvider.notifier).setThemeMode(value!);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    );
+  IconData _getThemeIcon(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return Icons.brightness_auto_rounded;
+      case ThemeMode.light:
+        return Icons.light_mode_rounded;
+      case ThemeMode.dark:
+        return Icons.dark_mode_rounded;
+    }
   }
 
   void _showPlatformFilterDialog(BuildContext context) {

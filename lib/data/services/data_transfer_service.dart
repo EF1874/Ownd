@@ -130,8 +130,8 @@ class DataTransferService {
     final zipFileEncoder = ZipFileEncoder();
     final zipPath = '${tempDir.path}/$fileName';
     zipFileEncoder.create(zipPath);
-    zipFileEncoder.addDirectory(stagingDir); // Zip the content of staging dir
-    zipFileEncoder.close();
+    await zipFileEncoder.addDirectory(stagingDir);
+    await zipFileEncoder.close();
 
     // Move ZIP to Output Directory
     Directory? outputDir;
@@ -188,11 +188,11 @@ class DataTransferService {
              final filename = file.name;
               if (file.isFile) {
                 final data = file.content as List<int>;
-                File('${stagingPath}/$filename')
+                File('$stagingPath/$filename')
                   ..createSync(recursive: true)
                   ..writeAsBytesSync(data);
               } else {
-                Directory('${stagingPath}/$filename').create(recursive: true);
+                await Directory('$stagingPath/$filename').create(recursive: true);
               }
            }
 
@@ -233,9 +233,7 @@ class DataTransferService {
               if (uuid != null) {
                 category = await _isar.categorys.filter().uuidEqualTo(uuid).findFirst();
               }
-              if (category == null) {
-                category = await _isar.categorys.filter().nameEqualTo(name).findFirst();
-              }
+              category ??= await _isar.categorys.filter().nameEqualTo(name).findFirst();
 
               if (category == null) {
                 category = Category()

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../data/models/device.dart';
 import '../../../data/repositories/device_repository.dart';
 import '../../../shared/utils/icon_utils.dart';
@@ -12,11 +13,13 @@ import '../../../shared/utils/format_utils.dart';
 import 'dart:io';
 import '../../../shared/widgets/image_preview_dialog.dart';
 import '../../add_device/add_device_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class DeviceGridItem extends ConsumerWidget {
   final Device device;
+  final int index;
 
-  const DeviceGridItem({super.key, required this.device});
+  const DeviceGridItem({super.key, required this.device, this.index = 0});
 
   IconData _getCategoryIcon(String? categoryName) {
     final item = CategoryConfig.getItem(categoryName);
@@ -27,6 +30,10 @@ class DeviceGridItem extends ConsumerWidget {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => AddDeviceScreen(device: device)),
     );
+  }
+
+  void _navigateToDetail(BuildContext context) {
+    context.push('/device/${device.id}');
   }
 
   @override
@@ -41,12 +48,13 @@ class DeviceGridItem extends ConsumerWidget {
 
     // Handle adaptive color for null categoryColor
     final effectiveCategoryColor = categoryColor ?? theme.colorScheme.onSurface;
+    
+    final hasBg = device.imagePath != null || device.customIconPath != null;
 
     return BaseCard(
-      color: theme.colorScheme.surfaceContainerHighest.withAlpha(
-        102,
-      ), // 0.4 * 255
-      onTap: () => _navigateToEdit(context),
+      variant: CardVariant.glass,
+      backgroundImagePath: device.imagePath ?? device.customIconPath,
+      onTap: () => _navigateToDetail(context),
       onLongPress: () {
         showModalBottomSheet(
           context: context,
@@ -81,8 +89,9 @@ class DeviceGridItem extends ConsumerWidget {
             height: 80,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: effectiveCategoryColor.withValues(alpha: 0.1),
+              color: effectiveCategoryColor.withAlpha(25),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: effectiveCategoryColor.withAlpha(50), width: 1),
             ),
             alignment: Alignment.center,
             child: device.customIconPath != null
@@ -90,7 +99,7 @@ class DeviceGridItem extends ConsumerWidget {
                     onTap: () =>
                         ImagePreviewDialog.show(context, device.customIconPath!),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(11),
                       child: Image.file(
                         File(device.customIconPath!),
                         width: double.infinity,
@@ -101,7 +110,7 @@ class DeviceGridItem extends ConsumerWidget {
                   )
                 : Icon(categoryIcon, size: 28, color: effectiveCategoryColor),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             device.name,
             maxLines: 1,
@@ -109,9 +118,10 @@ class DeviceGridItem extends ConsumerWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
+              color: hasBg ? Colors.white : theme.colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
@@ -123,7 +133,8 @@ class DeviceGridItem extends ConsumerWidget {
                   TextSpan(
                     text: '剩余',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
+                      color: hasBg ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
                   ),
@@ -137,16 +148,18 @@ class DeviceGridItem extends ConsumerWidget {
                           1;
                       return (diff < 0 ? 0 : diff).toString();
                     }(),
-                    style: theme.textTheme.headlineSmall?.copyWith(
+                    style: TextStyle(
+                      fontFamily: 'monospace',
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                      color: hasBg ? Colors.white : theme.colorScheme.primary, // Cyber Mint
                       fontSize: 20,
                     ),
                   ),
                   TextSpan(
                     text: '天',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
+                      color: hasBg ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
                   ),
@@ -154,22 +167,25 @@ class DeviceGridItem extends ConsumerWidget {
                   TextSpan(
                     text: '使用',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
+                      color: hasBg ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
                   ),
                   TextSpan(
                     text: '${device.daysUsed}',
-                    style: theme.textTheme.headlineSmall?.copyWith(
+                    style: TextStyle(
+                      fontFamily: 'monospace',
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                      color: hasBg ? Colors.white : theme.colorScheme.primary, // Cyber Mint
                       fontSize: 20,
                     ),
                   ),
                   TextSpan(
                     text: '天',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.grey,
+                      color: hasBg ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
                   ),
@@ -177,27 +193,57 @@ class DeviceGridItem extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Column(
             children: [
               Text(
                 '¥${FormatUtils.formatCurrency(device.price)}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFFcf3d69),
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  color: hasBg ? Colors.white : theme.colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 15,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 '¥${FormatUtils.formatCurrency(dailyCost)}/天',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: (costColor ?? theme.colorScheme.onSurfaceVariant)
-                      .withValues(alpha: 0.7),
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  color: hasBg ? Colors.white : (costColor ?? theme.colorScheme.onSurfaceVariant),
+                  fontWeight: FontWeight.bold,
                   fontSize: 11,
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 20,
+            child: device.tags.isNotEmpty
+                ? Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: device.tags.take(3).map((tag) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withAlpha(hasBg ? 100 : 50),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: theme.colorScheme.primary.withAlpha(hasBg ? 200 : 100), width: 0.5),
+                      ),
+                      child: Text(
+                        '#$tag',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: hasBg ? Colors.white : theme.colorScheme.primary,
+                          fontSize: 9,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )).toList(),
+                  )
+                : null,
           ),
           const Spacer(),
           SizedBox(
@@ -211,7 +257,12 @@ class DeviceGridItem extends ConsumerWidget {
           ),
         ],
       ),
-    );
+    ).animate().fadeIn(delay: (index * 50).ms).slideY(
+          begin: 0.1,
+          delay: (index * 50).ms,
+          duration: 300.ms,
+          curve: Curves.easeOutQuad,
+        );
   }
 
   Widget _buildStatusBadges(Device device) {

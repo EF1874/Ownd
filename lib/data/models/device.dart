@@ -39,6 +39,14 @@ class Device {
   int reminderDays = 1;
   bool hasReminder = false;
 
+  // --- New fields for v1.2 ---
+  String? imagePath;
+  String? notes;
+  List<String> tags = [];
+  int usageCount = 0;
+  DateTime? lastUsedDate;
+  double? expectedLifeYears;
+
   List<SubscriptionHistory> history = [];
 
   double get totalAccumulatedPrice {
@@ -99,6 +107,35 @@ class Device {
       return 'backup';
     }
     return 'active';
+  }
+
+  /// Cost per use = total price / usage count.
+  /// Returns null if usageCount is 0.
+  @ignore
+  double? get perUseCost {
+    if (usageCount <= 0) return null;
+    return price / usageCount;
+  }
+
+  /// Depreciated current value using straight-line depreciation.
+  /// currentValue = price * (1 - daysUsed / expectedLifeDays)
+  /// Returns null if expectedLifeYears is not set.
+  @ignore
+  double? get currentValue {
+    if (expectedLifeYears == null || expectedLifeYears! <= 0) return null;
+    final expectedDays = (expectedLifeYears! * 365).round();
+    final used = daysUsed;
+    if (used >= expectedDays) return 0.0;
+    return price * (1 - used / expectedDays);
+  }
+
+  /// Whether this item is considered idle (no usage in N days).
+  bool isIdle({int thresholdDays = 90}) {
+    if (lastUsedDate == null) {
+      // If never used and owned for more than threshold days
+      return daysUsed > thresholdDays;
+    }
+    return DateTime.now().difference(lastUsedDate!).inDays > thresholdDays;
   }
 
   void snapshotCurrentSubscription({

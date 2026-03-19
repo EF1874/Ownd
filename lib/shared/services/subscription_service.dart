@@ -48,7 +48,7 @@ class SubscriptionService {
         // Update DB
         await _deviceRepo.updateDevice(device);
         // Reschedule notification for the new date
-        scheduleSubscriptionNotification(device);
+        await scheduleSubscriptionNotification(device);
       }
     }
   }
@@ -97,6 +97,46 @@ class SubscriptionService {
 
   Future<void> cancelSubscriptionNotification(Device device) async {
     await _notificationService.cancelNotification(device.id);
+  }
+
+  Future<void> scheduleWarrantyNotification(Device device) async {
+    if (device.warrantyEndDate == null) return;
+
+    final warrantyDate = device.warrantyEndDate!;
+    // Calculate notification date: 30 days before warranty expires
+    final reminderDate = warrantyDate.subtract(const Duration(days: 30));
+
+    // Parse user preference time
+    final timeParts = _prefs.notificationTime.split(':');
+    final hour = int.parse(timeParts[0]);
+    final minute = int.parse(timeParts[1]);
+
+    final scheduledDateTime = DateTime(
+      reminderDate.year,
+      reminderDate.month,
+      reminderDate.day,
+      hour,
+      minute,
+    );
+
+    // If the scheduled time is in the past, do not schedule
+    if (scheduledDateTime.isBefore(DateTime.now())) {
+      return;
+    }
+
+    String body = '您的物品 ${device.name} 的保修即将在 ${DateFormat('MM-dd').format(warrantyDate)} 到期';
+
+    await _notificationService.scheduleNotification(
+      id: device.id + 100000, // Offset to avoid collision with subscription IDs
+      title: '保修到期提醒',
+      body: body,
+      scheduledDate: scheduledDateTime,
+      payload: '/device/${device.id}',
+    );
+  }
+
+  Future<void> cancelWarrantyNotification(Device device) async {
+    await _notificationService.cancelNotification(device.id + 100000);
   }
 
   /// Check for missed notifications on app start
@@ -167,8 +207,9 @@ class SubscriptionService {
   /// Recursively renews the device until nextBillingDate is in the future.
   /// Returns true if any renewal happened.
   bool _processRenewal(Device device, DateTime targetDate) {
-    if (device.nextBillingDate == null || device.cycleType == null)
+    if (device.nextBillingDate == null || device.cycleType == null) {
       return false;
+    }
 
     bool renewed = false;
     DateTime next = device.nextBillingDate!;
@@ -219,8 +260,9 @@ class SubscriptionService {
 
   /// Manually renews a subscription for a given number of cycles.
   Future<void> manualRenew(Device device, {int cycles = 1}) async {
-    if (device.cycleType == null || device.cycleType == CycleType.oneTime)
+    if (device.cycleType == null || device.cycleType == CycleType.oneTime) {
       return;
+    }
 
     DateTime next = device.nextBillingDate ?? DateTime.now();
 
@@ -260,7 +302,7 @@ class SubscriptionService {
     device.nextBillingDate = next;
     await _deviceRepo.updateDevice(device);
     // Use the updated date for scheduling
-    scheduleSubscriptionNotification(device);
+    await scheduleSubscriptionNotification(device);
   }
 
   Duration _getDuration(CycleType type) {

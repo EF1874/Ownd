@@ -38,7 +38,7 @@ class _RenewDialogState extends State<RenewDialog> {
         children: [
           DropdownButtonFormField<CycleType>(
             decoration: const InputDecoration(labelText: '续费周期'),
-            value: _selectedCycle,
+            initialValue: _selectedCycle,
             items:
                 [
                   CycleType.daily,

@@ -1,52 +1,36 @@
-import 'package:isar/isar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/device.dart';
+import '../datasource/device_datasource.dart';
+import '../datasource/local/isar_device_datasource.dart';
 import '../services/database_service.dart';
-import '../services/backup_service.dart';
 
-final deviceRepositoryProvider = Provider<DeviceRepository>((ref) {
+/// Riverpod provider for the DeviceDataSource.
+/// Swap this to a remote implementation when backend is ready.
+final deviceDataSourceProvider = Provider<DeviceDataSource>((ref) {
   final dbService = ref.watch(databaseServiceProvider);
-  final backupService = ref.watch(backupServiceProvider);
-  return DeviceRepository(dbService.isar, backupService);
+  return IsarDeviceDataSource(dbService.isar);
 });
 
+/// Riverpod provider for the DeviceRepository.
+final deviceRepositoryProvider = Provider<DeviceRepository>((ref) {
+  final dataSource = ref.watch(deviceDataSourceProvider);
+  return DeviceRepository(dataSource);
+});
+
+/// Repository layer for Device entities.
+/// Business logic lives here; data access is delegated to [DeviceDataSource].
 class DeviceRepository {
-  final Isar _isar;
-  final BackupService _backupService;
+  final DeviceDataSource _dataSource;
 
-  DeviceRepository(this._isar, this._backupService);
+  DeviceRepository(this._dataSource);
 
-  Future<List<Device>> getAllDevices() async {
-    return await _isar.devices.where().findAll();
-  }
+  Future<List<Device>> getAllDevices() => _dataSource.getAll();
 
-  Stream<List<Device>> watchAllDevices() {
-    return _isar.devices.where().watch(fireImmediately: true);
-  }
+  Stream<List<Device>> watchAllDevices() => _dataSource.watchAll();
 
-  Future<void> addDevice(Device device) async {
-    await _isar.writeTxn(() async {
-      await _isar.devices.put(device);
-      await device.category.save();
-    });
-    // Trigger backup after adding device
-    _backupService.createBackup();
-  }
+  Future<void> addDevice(Device device) => _dataSource.add(device);
 
-  Future<void> updateDevice(Device device) async {
-    await _isar.writeTxn(() async {
-      await _isar.devices.put(device);
-      await device.category.save();
-    });
-    // Trigger backup after updating device
-    _backupService.createBackup();
-  }
+  Future<void> updateDevice(Device device) => _dataSource.update(device);
 
-  Future<void> deleteDevice(Id id) async {
-    await _isar.writeTxn(() async {
-      await _isar.devices.delete(id);
-    });
-    // Trigger backup after deleting device
-    // _backupService.createBackup(); // Disabled to prevent accidental data loss
-  }
+  Future<void> deleteDevice(int id) => _dataSource.delete(id);
 }

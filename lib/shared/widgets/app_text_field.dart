@@ -14,6 +14,7 @@ class AppTextField extends StatelessWidget {
   final VoidCallback? onTap;
   final TextStyle? labelStyle;
   final String? helperText;
+  final int maxLines;
 
   final bool enabled;
 
@@ -33,6 +34,7 @@ class AppTextField extends StatelessWidget {
     this.onTap,
     this.labelStyle,
     this.helperText,
+    this.maxLines = 1,
   });
 
   @override
@@ -55,6 +57,7 @@ class AppTextField extends StatelessWidget {
       readOnly: readOnly,
       enabled: enabled,
       onTap: onTap,
+      maxLines: maxLines,
     );
   }
 }

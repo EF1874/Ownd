@@ -1,5 +1,6 @@
 part of 'add_device_screen.dart';
 
+// ignore: library_private_types_in_public_api
 extension AddDeviceLogic on _AddDeviceScreenState {
   double _getCurrentFirstCost() {
     double? price = double.tryParse(_priceCtr.text);
@@ -28,8 +29,9 @@ extension AddDeviceLogic on _AddDeviceScreenState {
     // Remove trailing zeros if decimal
     if (newText.contains('.')) {
       newText = double.parse(newText).toString();
-      if (newText.endsWith('.0'))
+      if (newText.endsWith('.0')) {
         newText = newText.substring(0, newText.length - 2);
+      }
     }
 
     if (_totalAccumulatedPriceCtr.text != newText) {
@@ -84,15 +86,15 @@ extension AddDeviceLogic on _AddDeviceScreenState {
     );
     if (picked != null) {
       updateState(() {
-        if (isBilling)
+        if (isBilling) {
           _nextBillingDate = picked;
-        else if (isWarranty)
+        } else if (isWarranty) {
           _warrantyDate = picked;
-        else if (isBackup)
+        } else if (isBackup) {
           _backupDate = picked;
-        else if (isScrap)
+        } else if (isScrap) {
           _scrapDate = picked;
-        else {
+        } else {
           _purchaseDate = picked;
           if (_isSub) _calculateNextBilling();
         }
@@ -131,6 +133,11 @@ extension AddDeviceLogic on _AddDeviceScreenState {
         ..backupDate = _backupDate
         ..scrapDate = _scrapDate
         ..customIconPath = _customIconPath
+        ..imagePath = _imagePath
+        ..notes = _notesCtr.text.trim().isEmpty ? null : _notesCtr.text.trim()
+        ..tags = _tagsCtr.text.trim().isEmpty
+            ? []
+            : _tagsCtr.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
         ..category.value = finalCat
         ..cycleType = _isSub ? _cycleType : null
         ..isAutoRenew = _isSub ? _isAutoRenew : true
@@ -166,25 +173,36 @@ extension AddDeviceLogic on _AddDeviceScreenState {
         }
       }
 
-      if (widget.device != null)
+      if (widget.device != null) {
         await ref.read(deviceRepositoryProvider).updateDevice(device);
-      else
+      } else {
         await ref.read(deviceRepositoryProvider).addDevice(device);
+      }
 
       // Handle Notifications
       final subService = ref.read(subscriptionServiceProvider);
+      
+      // Subscriptions
       if (device.hasReminder && device.nextBillingDate != null) {
         await subService.scheduleSubscriptionNotification(device);
       } else {
         await subService.cancelSubscriptionNotification(device);
       }
 
+      // Warranty
+      if (device.warrantyEndDate != null) {
+        await subService.scheduleWarrantyNotification(device);
+      } else {
+        await subService.cancelWarrantyNotification(device);
+      }
+
       if (mounted) {
         _showSnack(widget.device != null ? '修改成功' : '添加成功');
-        if (Navigator.canPop(context))
+        if (Navigator.canPop(context)) {
           Navigator.of(context).pop();
-        else
+        } else {
           context.go('/');
+        }
       }
     } catch (e) {
       if (mounted) _showSnack('保存失败: $e');

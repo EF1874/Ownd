@@ -96,7 +96,7 @@ class SubscriptionSettingsInfo extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("自动续费"),
+                    const Text('自动续费'),
                     Switch(value: isAutoRenew, onChanged: onAutoRenewChanged),
                   ],
                 ),
@@ -120,7 +120,7 @@ class SubscriptionSettingsInfo extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("提醒"),
+                    const Text('提醒'),
                     Switch(value: hasReminder, onChanged: onReminderChanged),
                   ],
                 ),
@@ -141,7 +141,7 @@ class SubscriptionSettingsInfo extends StatelessWidget {
                         vertical: 16,
                       ),
                     ),
-                    value: reminderDays,
+                    initialValue: reminderDays,
                     items: List.generate(10, (index) => index + 1)
                         .map(
                           (d) => DropdownMenuItem(value: d, child: Text('$d天')),
@@ -171,7 +171,7 @@ class SubscriptionSettingsInfo extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text("首期优惠"),
+                      const Text('首期优惠'),
                       Switch(
                         value: hasFirstPeriodDiscount,
                         onChanged: onDiscountChanged,

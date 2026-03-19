@@ -96,9 +96,9 @@ class TimelineNode extends StatelessWidget {
                       fontWeight: FontWeight.bold,                               
                     ),
                   ),
-                  if (event.note != null && event.note!.isNotEmpty)
+                  if (event.note != null && event.note?.isNotEmpty == true)
                      Text(
-                       event.note!,
+                       event.note ?? '',
                        style: theme.textTheme.bodySmall?.copyWith(fontSize: 10, color: theme.colorScheme.outline),
                      )
               ],

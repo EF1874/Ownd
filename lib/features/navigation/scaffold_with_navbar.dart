@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../shared/widgets/draggable_add_button.dart';
+import '../../core/theme/app_colors.dart';
 
 class ScaffoldWithNavBar extends ConsumerStatefulWidget {
   final Widget child;
@@ -18,15 +20,15 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    // final isVisible = ref.watch(bottomNavBarVisibleProvider); // Removed auto-hide
     final index = _calculateSelectedIndex(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // Only show FAB on Home (0) and Timeline (1)
+    // Only show FAB on Home (0) and Insights (1)
     final showFab = index == 0 || index == 1;
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
 
         // 1. If not on Home, go to Home
@@ -35,56 +37,75 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
           return;
         }
 
-        // 2. Removed auto-hide restore logic
-
-        // 3. Double back logic
+        // 2. Double back logic
         final now = DateTime.now();
         if (_lastPressedAt == null ||
             now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
           _lastPressedAt = now;
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
+            const SnackBar(
+              content: Text(
                 '再按一次退出应用',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70),
               ),
-              backgroundColor: Colors.black54,
-              behavior: SnackBarBehavior.floating,
-              width: 160,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              duration: const Duration(seconds: 2),
+              duration: Duration(seconds: 2),
             ),
           );
           return;
         }
 
-        // 4. Exit App
+        // 3. Exit App
         await SystemNavigator.pop();
       },
       child: Stack( 
         children: [
           Scaffold(
-            body: widget.child,
-            resizeToAvoidBottomInset: false, // Prevent FAB moving with keyboard
-            bottomNavigationBar: NavigationBar(
-               selectedIndex: index,
-               onDestinationSelected: (int idx) => _onItemTapped(idx, context),
-               destinations: const [
-                 NavigationDestination(icon: Icon(Icons.devices), label: '资产'),
-                 NavigationDestination(
-                   icon: Icon(Icons.history),
-                   label: '物历',
-                 ),
-                 NavigationDestination(
-                   icon: Icon(Icons.person_outline),
-                   selectedIcon: Icon(Icons.person),
-                   label: '我的',
-                 ),
-               ],
+            body: SizedBox(
+               key: ValueKey<int>(index),
+               child: widget.child,
+            ),
+            resizeToAvoidBottomInset: false,
+            bottomNavigationBar: ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.deepSpace.withValues(alpha: 0.85)
+                        : AppColors.snow.withValues(alpha: 0.9),
+                    border: Border(
+                      top: BorderSide(
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder,
+                      ),
+                    ),
+                  ),
+                  child: NavigationBar(
+                    selectedIndex: index,
+                    onDestinationSelected: (int idx) =>
+                        _onItemTapped(idx, context),
+                    destinations: const [
+                      NavigationDestination(
+                        icon: Icon(Icons.devices_outlined),
+                        selectedIcon: Icon(Icons.devices),
+                        label: '资产',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.insights_outlined),
+                        selectedIcon: Icon(Icons.insights),
+                        label: '统计',
+                      ),
+                      NavigationDestination(
+                        icon: Icon(Icons.person_outline),
+                        selectedIcon: Icon(Icons.person),
+                        label: '我的',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
           if (showFab) const DraggableAddButton(),
@@ -97,7 +118,7 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/')) {
       if (location == '/') return 0;
-      if (location.startsWith('/timeline')) return 1;
+      if (location.startsWith('/insights')) return 1;
       if (location.startsWith('/profile')) return 2;
     }
     return 0;
@@ -109,7 +130,7 @@ class _ScaffoldWithNavBarState extends ConsumerState<ScaffoldWithNavBar> {
         GoRouter.of(context).go('/');
         break;
       case 1:
-        GoRouter.of(context).go('/timeline');
+        GoRouter.of(context).go('/insights');
         break;
       case 2:
         GoRouter.of(context).go('/profile');
