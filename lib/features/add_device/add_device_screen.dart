@@ -1,14 +1,10 @@
-import 'dart:io';
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+import 'package:uuid/uuid.dart';
+import '../../shared/services/image_service.dart';
 
 import '../../data/models/category.dart';
 import '../../data/models/device.dart';
@@ -73,7 +69,7 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
   DateTime? _preRenewalNextBillingDate;
   double _baseAccumulatedPrice = 0.0;
   
-  final ImagePicker _picker = ImagePicker();
+  late final String _uuid; // Track UUID for file naming
 
   bool get _isSub =>
       CategoryConfig.getMajorCategory(_selectedCategory?.name) == '虚拟订阅';
@@ -110,8 +106,10 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
       // Calculate base price from existing total
       double currentCost = d.firstPeriodPrice ?? d.price;
       _baseAccumulatedPrice = d.totalAccumulatedPrice - currentCost;
+      _uuid = d.uuid;
     } else {
       _baseAccumulatedPrice = 0.0;
+      _uuid = const Uuid().v4();
     }
 
     _priceCtr.addListener(_updateTotalStr);
@@ -138,63 +136,34 @@ class _AddDeviceScreenState extends ConsumerState<AddDeviceScreen> {
   }
   
   Future<void> _pickCustomIcon() async {
-    try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image == null) return;
-      if (!mounted) return;
-      final colorScheme = Theme.of(context).colorScheme;
-
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: image.path,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: '裁剪图片',
-            toolbarColor: colorScheme.primary,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: false,
-          ),
-          IOSUiSettings(
-            title: '裁剪图片',
-          ),
-        ],
-      );
-
-      if (croppedFile != null) {
-        // Save to Application Documents Directory
-        final appDir = await getApplicationDocumentsDirectory();
-        final fileName = path.basename(croppedFile.path);
-        final savedImage = await File(croppedFile.path).copy('${appDir.path}/$fileName');
-        
-        setState(() {
-          _customIconPath = savedImage.path;
-        });
+    final imageService = ref.read(imageServiceProvider);
+    final file = await imageService.pickAndCropImage(
+      context: context,
+      source: ImageSource.gallery,
+      isSquare: true,
+    );
+    
+    if (file != null) {
+      final savedPath = await imageService.saveImageToAppDirectory(file, _uuid, isIcon: true);
+      if (savedPath != null) {
+        updateState(() => _customIconPath = savedPath);
       }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('选择图片失败: $e')),
-      );
     }
   }
 
   Future<void> _pickPhoto() async {
-    try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-      if (image == null) return;
-
-      final appDir = await getApplicationDocumentsDirectory();
-      final fileName = 'photo_${DateTime.now().millisecondsSinceEpoch}_${path.basename(image.path)}';
-      final savedImage = await File(image.path).copy('${appDir.path}/$fileName');
-      
-      setState(() {
-        _imagePath = savedImage.path;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('选择相片失败: $e')),
-      );
+    final imageService = ref.read(imageServiceProvider);
+    final file = await imageService.pickAndCropImage(
+      context: context,
+      source: ImageSource.gallery,
+      isSquare: false,
+    );
+    
+    if (file != null) {
+      final savedPath = await imageService.saveImageToAppDirectory(file, _uuid, isIcon: false);
+      if (savedPath != null) {
+        updateState(() => _imagePath = savedPath);
+      }
     }
   }
 

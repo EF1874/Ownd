@@ -85,30 +85,33 @@ class DeviceGridItem extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Container(
-            height: 80,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: effectiveCategoryColor.withAlpha(25),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: effectiveCategoryColor.withAlpha(50), width: 1),
-            ),
-            alignment: Alignment.center,
-            child: device.customIconPath != null
-                ? GestureDetector(
-                    onTap: () =>
-                        ImagePreviewDialog.show(context, device.customIconPath!),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(11),
-                      child: Image.file(
-                        File(device.customIconPath!),
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
+          Hero(
+            tag: 'device_icon_${device.id}',
+            child: Container(
+              height: 80,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: effectiveCategoryColor.withAlpha(25),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: effectiveCategoryColor.withAlpha(50), width: 1),
+              ),
+              alignment: Alignment.center,
+              child: device.customIconPath != null
+                  ? GestureDetector(
+                      onTap: () =>
+                          ImagePreviewDialog.show(context, device.customIconPath!),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(11),
+                        child: Image.file(
+                          File(device.customIconPath!),
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    ),
-                  )
-                : Icon(categoryIcon, size: 28, color: effectiveCategoryColor),
+                    )
+                  : Icon(categoryIcon, size: 28, color: effectiveCategoryColor),
+            ),
           ),
           const SizedBox(height: 12),
           Text(

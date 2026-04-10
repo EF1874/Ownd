@@ -92,31 +92,34 @@ class DeviceListItem extends ConsumerWidget {
           onTap: () => navigateToDetail(context),
           child: Row(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: effectiveCategoryColor.withAlpha(50), // 0.2 * 255 for better visibility on glass
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: effectiveCategoryColor.withAlpha(100), width: 1),
-                ),
-                child: device.customIconPath != null
-                    ? GestureDetector(
-                        onTap: () => ImagePreviewDialog.show(
-                          context,
-                          device.customIconPath!,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(11),
-                          child: Image.file(
-                            File(device.customIconPath!),
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
+              Hero(
+                tag: 'device_icon_${device.id}',
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: effectiveCategoryColor.withAlpha(50), // 0.2 * 255 for better visibility on glass
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: effectiveCategoryColor.withAlpha(100), width: 1),
+                  ),
+                  child: device.customIconPath != null
+                      ? GestureDetector(
+                          onTap: () => ImagePreviewDialog.show(
+                            context,
+                            device.customIconPath!,
                           ),
-                        ),
-                      )
-                    : Icon(categoryIcon, color: effectiveCategoryColor),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(11),
+                            child: Image.file(
+                              File(device.customIconPath!),
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
+                      : Icon(categoryIcon, color: effectiveCategoryColor),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
